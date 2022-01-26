@@ -40,7 +40,7 @@ Inside the container, run:
 
 
 # Useful References
-   1. HW accelerated GUI apps on Docker: https://medium.com/@pigiuz/hw-accelerated-gui-apps-on-docker-7fd424fe813e
-   2. nvidia-docker 1 can run OpenGL applications; nvidia-docker 2 can't: https://github.com/NVIDIA/nvidia-docker/issues/534
-   3. Running OpenGL & CUDA Applications with nvidia-docker2 on a Remote (headless) GPU System: https://trn84.medium.com/running-opengl-cuda-applications-with-nvidia-docker2-on-a-remote-headless-gpu-system-6b19c665286d
-   4. Supporting OpenGL/WebGL and using HW acceleration (GPU): https://github.com/accetto/ubuntu-vnc-xfce-g3/discussions/10
+   1. [HW accelerated GUI apps on Docker](https://medium.com/@pigiuz/hw-accelerated-gui-apps-on-docker-7fd424fe813e)
+   2. [nvidia-docker 1 can run OpenGL applications; nvidia-docker 2 can't](https://github.com/NVIDIA/nvidia-docker/issues/534)
+   3. [Running OpenGL & CUDA Applications with nvidia-docker2 on a Remote (headless) GPU System](https://trn84.medium.com/running-opengl-cuda-applications-with-nvidia-docker2-on-a-remote-headless-gpu-system-6b19c665286d)
+   4. [Supporting OpenGL/WebGL and using HW acceleration (GPU)](https://github.com/accetto/ubuntu-vnc-xfce-g3/discussions/10)
