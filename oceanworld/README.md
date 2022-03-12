@@ -20,13 +20,15 @@
 
 # Build And Test
 ## Build the docker image
-`./build.sh`
+`./build.sh <ROS_DISTRO> <IMAGE_VERSION>`
+<br>Inside the directory, *versions*, there should be a subdirectory with the name, <IMAGE_VERSION>
+<br>Currently, there are two verions available in the repo, which correspond to the release 8 and release 9 of ow_simulator
 ## Test
 CONTAINER_NAME=oceanworld
 
 ### terminal 1
 `$> xhost +local:root`
-<br>`$> docker run -name <CONTAINER_NAME> --rm -it --gpus all -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 raspberrysi/oceanworld:nvidia bash`
+<br>`$> docker run --name <CONTAINER_NAME> --rm -it --gpus all -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 raspberrysi/oceanworld:nvidia bash`
 
 Inside the container, run:
 <br>`roslaunch ow europa_terminator.launch`
@@ -36,6 +38,7 @@ Inside the container, run:
 <br>`$> docker exec -it <Container_NAME> bash`
 
 Inside the container, run:
+<br>`source devel/setup.bash`
 <br>`roslaunch ow_plexil ow_exec.launch plan:=ReferenceMission1.plx`
 
 
@@ -44,3 +47,5 @@ Inside the container, run:
    2. [nvidia-docker 1 can run OpenGL applications; nvidia-docker 2 can't](https://github.com/NVIDIA/nvidia-docker/issues/534)
    3. [Running OpenGL & CUDA Applications with nvidia-docker2 on a Remote (headless) GPU System](https://trn84.medium.com/running-opengl-cuda-applications-with-nvidia-docker2-on-a-remote-headless-gpu-system-6b19c665286d)
    4. [Supporting OpenGL/WebGL and using HW acceleration (GPU)](https://github.com/accetto/ubuntu-vnc-xfce-g3/discussions/10)
+   5. [NASA OceanWORLD simulator, ow_simulator](https://github.com/nasa/ow_simulator)
+   6. [TheRobotCooperative](https://github.com/TheRobotCooperative/TheRobotCooperative)

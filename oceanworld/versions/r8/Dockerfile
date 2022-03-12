@@ -1,8 +1,3 @@
-# This is a generic Dockerfile that is used to build all of the images within
-# the dataset. To do so, the Dockerfile relies on the use of build arguments
-# and the copying of additional scripts from the directory of the robot that
-# is being built.
-#
 # Build arguments
 # ---------------
 # BUILD_COMMAND: the command that should be used to build the Catkin workspace.
@@ -10,8 +5,6 @@
 #   instead as a means of avoiding certain build issues.
 # DISTRO: specifies the ROS distribution that should be used by the base image
 # DIRECTORY: specifies the directory that provides files for the robot
-# GZWEB: use to specify whether GzWeb support should be added to the image
-#   values should be "yes" or "no".
 #
 # References
 # ----------
@@ -23,9 +16,12 @@
 # * https://www.tecmint.com/install-and-configure-vnc-server-on-ubuntu
 # * https://stackoverflow.com/questions/48601146/docker-how-to-set-tightvncserver-password
 
-FROM osrf/ros:melodic-desktop-full
+ARG DISTRO
+FROM osrf/ros:${DISTRO}-desktop-full
 
+ARG DISTRO
 ENV DEBIAN_FRONTEND noninteractive
+ENV ROS_DISTRO ${DISTRO}
 
 # Dependencies for glvnd and X11.
 RUN apt-get update \
@@ -42,9 +38,6 @@ RUN apt-get update \
 ENV NVIDIA_VISIBLE_DEVICES all 
 ENV NVIDIA_DRIVER_CAPABILITIES graphics,utility,compute
 
-ARG DISTRO
-ENV ROS_DISTRO ${DISTRO}
-
 # NOTE: We need to install the cmake_modules to avoid some build failures
 # that are due to unspecified dependencies.
 # (https://github.com/ros-industrial/industrial_calibration/issues/50)
@@ -53,8 +46,6 @@ ENV LANG C.UTF-8
 ENV LC_ALL C.UTF-8
 COPY rootfs /
 WORKDIR /ros_ws
-ENTRYPOINT ["/ros_ws/entrypoint.sh"]
-CMD ["/bin/bash"]
 
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
@@ -68,12 +59,12 @@ RUN apt-get update \
       gcc \
       g++ \
       mercurial \
-      python-pip \
       "ros-${ROS_DISTRO}-cmake-modules" \
       software-properties-common \
-      tmux \
       vim \
       wget \
+      git \
+      python-pip \
  && echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list \
  && wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add - \
  && echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -cs) main" > /etc/apt/sources.list.d/ros-latest.list \
@@ -81,13 +72,13 @@ RUN apt-get update \
  && apt-get update \
  && apt-get upgrade -y \
  && pip install \
-      catkin-tools==0.4.5 \
       coverage==5.1 \
       rosinstall-generator==0.1.18 \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
 # build package
+## Install dependent packages
 ARG DIRECTORY
 COPY "${DIRECTORY}"/pkgs.rosinstall "${DIRECTORY}"/apt.list* /.dockerinstall/
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh \
@@ -98,6 +89,7 @@ RUN . /opt/ros/${ROS_DISTRO}/setup.sh \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
+## Download Top-level repos
 RUN mv /.dockerinstall/pkgs.rosinstall /ros_ws/pkgs.rosinstall \
  && apt-get update \
  && wstool init -j8 src pkgs.rosinstall \
@@ -109,13 +101,17 @@ RUN mv /.dockerinstall/pkgs.rosinstall /ros_ws/pkgs.rosinstall \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
+## Build PLEXIL and GSAP
 COPY "${DIRECTORY}" /.dockerinstall/
 RUN ls -al /.dockerinstall
 RUN (test -f /.dockerinstall/prebuild.sh \
      && ((echo "running prebuild step..." && apt-get update && /bin/bash /.dockerinstall/prebuild.sh && apt-get clean && rm -rf /var/lib/apt/lists/* )|| exit 1) \
      || (echo "skipping prebuild step [no prebuild.sh]" && exit 0))
 
+## Build  ow_simulator, ow_autonomy and other related projects
 ARG BUILD_COMMAND=". ~/.profile; catkin build"
 RUN . /opt/ros/${ROS_DISTRO}/setup.sh \
- && eval "${BUILD_COMMAND} -DCMAKE_EXPORT_COMPILE_COMMANDS=1"
+ && eval "${BUILD_COMMAND} -j8 -DCMAKE_EXPORT_COMPILE_COMMANDS=1"
 
+ENTRYPOINT ["/ros_ws/entrypoint.sh"]
+CMD ["/bin/bash"]

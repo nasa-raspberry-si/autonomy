@@ -1,5 +1,7 @@
+python-rosdep
+python-rosinstall
 python-wstool 
-python-catkin-tools 
+python-catkin-tools
 ros-melodic-tf2-ros 
 ros-melodic-robot-state-publisher 
 ros-melodic-joint-state-publisher 
