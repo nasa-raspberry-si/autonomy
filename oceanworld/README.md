@@ -41,6 +41,11 @@ Inside the container, run:
 <br>`source devel/setup.bash`
 <br>`roslaunch ow_plexil ow_exec.launch plan:=ReferenceMission1.plx`
 
+# Play With Two Example Images
+## Release 9 of ow_simulator: ROS Noetic
+`docker pull oceank/oceanworld:r9`
+## Release 8 of ow_simulator: ROS Melodic
+`docker pull oceank/oceanworld:r8`
 
 # Useful References
    1. [HW accelerated GUI apps on Docker](https://medium.com/@pigiuz/hw-accelerated-gui-apps-on-docker-7fd424fe813e)
