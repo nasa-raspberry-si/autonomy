@@ -28,7 +28,7 @@ CONTAINER_NAME=oceanworld
 
 ### terminal 1
 `$> xhost +local:root`
-<br>`$> docker run --name <CONTAINER_NAME> --rm -it --gpus all -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 raspberrysi/oceanworld:nvidia bash`
+<br>`$> docker run --name <CONTAINER_NAME> --rm -it --gpus all -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 raspberrysi/oceanworld:r9 bash`
 
 Inside the container, run:
 <br>`roslaunch ow europa_terminator.launch`
