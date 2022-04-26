@@ -1,0 +1,10 @@
+*.o
+*.d
+*.ple
+*.plx
+*.epx
+*.dylib
+*.so
+*.~*
+*.pyc
+TAGS
