@@ -1,0 +1,41 @@
+<!-- Launch the plexil_node and terminal selection node. -->
+
+<launch>
+  <arg name="plan" default="None"/>
+
+
+
+  <node pkg="rs_autonomy"
+        name="monitor_node"
+        type="monitor_node"
+        args="$(arg plan)"
+        output="screen">
+  </node>
+  <node pkg="rs_autonomy"
+        name="analysis_node"
+        type="analysis_node"
+        args="$(arg plan)"
+        output="screen">
+  </node>
+
+  <node pkg="rs_autonomy"
+        name="planner_node"
+        type="planner_node"
+        output="screen">
+  </node>
+
+  <node pkg="rs_autonomy"
+        name="execute_node"
+        type="execute_node"
+        output="screen">
+  </node>
+
+  <!--
+  <node pkg="rs_autonomy"
+        name="knowledge_node"
+        type="knowledge_node"
+        output="screen">
+  </node>
+  -->
+
+</launch>
