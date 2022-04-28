@@ -7,6 +7,8 @@
 #include <rs_autonomy/MInfo.h>
 
 
+
+
 bool t = false;
 rs_autonomy::MInfo m_msg;
 
@@ -20,6 +22,25 @@ void taskSubCallback(const ow_plexil::CurrentTask current_task)
   t = true;
 }
 
+/*
+class CurrentTaskListener {
+  public:
+    ros::Publisher pub;
+    rs_autonomy::MInfo current_task;
+    void callback(const ow_plexil::CurrentTask current_task);
+};
+
+void CurrentTaskListener::callback(const ow_plexil::CurrentTask current_task)
+{
+  ROS_INFO_STREAM("[Monitor Node - Listener] current task: " << current_task.task_name << ", status: " << current_task.task_status);
+
+  this->current_task.task_name = current_task.task_name + "-ML";
+  this->current_task.task_status = current_task.task_status;
+
+  this->pub.publish(this->current_task);
+}
+*/
+
 int main(int argc, char* argv[])
 {
   // Initializations
@@ -32,6 +53,14 @@ int main(int argc, char* argv[])
   ros::Subscriber m_sub = nh.subscribe<ow_plexil::CurrentTask>("/CurrentTask",
                                                          3,
 							 taskSubCallback);
+  /*
+  CurrentTaskListener listener;
+  listener.pub =  nh.advertise<rs_autonomy::MInfo>("/MInfo", 3); 
+  ros::Subscriber ml_sub = nh.subscribe<ow_plexil::CurrentTask>("/CurrentTask",
+                                                         3,
+							 &CurrentTaskListener::callback,
+							 &listener);
+  */
 
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.

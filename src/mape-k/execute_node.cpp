@@ -3,42 +3,46 @@
 #include <ros/package.h>
 
 // OW
-#include <rs_autonomy/EInfo.h>
 #include <rs_autonomy/PInfo.h>
+#include <rs_autonomy/EInfo.h>
 
-bool p = false;
-rs_autonomy::EInfo e_msg;
 
-void pInfoSubCallback(const rs_autonomy::PInfo current_task)
+
+class PInfoListener {
+  public:
+    ros::Publisher pub;
+    rs_autonomy::EInfo current_task;
+    void callback(const rs_autonomy::PInfo current_task);
+};
+
+void PInfoListener::callback(const rs_autonomy::PInfo current_task)
 {
-  ROS_INFO_STREAM("[Execute Node] current task: " << current_task.task_name << ", status: " << current_task.task_status);
+  ROS_INFO_STREAM("[Execute Node - Listener] current task: " << current_task.task_name << ", status: " << current_task.task_status);
 
-  e_msg.task_name = current_task.task_name + "-E";
-  e_msg.task_status = current_task.task_status;
-  
-  p = true;
+  this->current_task.task_name = current_task.task_name + "-E";
+  this->current_task.task_status = current_task.task_status;
+
+  this->pub.publish(this->current_task);
 }
 
 int main(int argc, char* argv[])
 {
   // Initializations
 
-  ros::init(argc, argv, "execute_node");
+  ros::init(argc, argv, "planner_node");
 
   ros::NodeHandle nh;
 
-  ros::Publisher e_pub = nh.advertise<rs_autonomy::EInfo>("/EInfo", 3);
+  PInfoListener listener;
+  listener.pub =  nh.advertise<rs_autonomy::EInfo>("/EInfo", 3);
   ros::Subscriber e_sub = nh.subscribe<rs_autonomy::PInfo>("/PInfo",
                                                          3,
-							 pInfoSubCallback);
+                                                         &PInfoListener::callback,
+                                                         &listener);
+
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {
-    if (p) {
-      e_pub.publish(e_msg);
-      p = false;
-    }
-
     ros::spinOnce();
     rate.sleep();
   }

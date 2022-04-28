@@ -3,21 +3,26 @@
 #include <ros/package.h>
 
 // OW
-#include <rs_autonomy/PInfo.h>
 #include <rs_autonomy/AInfo.h>
+#include <rs_autonomy/PInfo.h>
 
 
-bool a = false;
-rs_autonomy::PInfo p_msg;
 
-void aInfoSubCallback(const rs_autonomy::AInfo current_task)
+class AInfoListener {
+  public:
+    ros::Publisher pub;
+    rs_autonomy::PInfo current_task;
+    void callback(const rs_autonomy::AInfo current_task);
+};
+
+void AInfoListener::callback(const rs_autonomy::AInfo current_task)
 {
-  ROS_INFO_STREAM("[Planner Node] current task: " << current_task.task_name << ", status: " << current_task.task_status);
+  ROS_INFO_STREAM("[Planner Node - Listener] current task: " << current_task.task_name << ", status: " << current_task.task_status);
 
-  p_msg.task_name = current_task.task_name + "-P";
-  p_msg.task_status = current_task.task_status;
+  this->current_task.task_name = current_task.task_name + "-P";
+  this->current_task.task_status = current_task.task_status;
 
-  a = true;
+  this->pub.publish(this->current_task);
 }
 
 int main(int argc, char* argv[])
@@ -28,18 +33,16 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
 
-  ros::Publisher p_pub = nh.advertise<rs_autonomy::PInfo>("/PInfo", 3);
+  AInfoListener listener;
+  listener.pub =  nh.advertise<rs_autonomy::PInfo>("/PInfo", 3);
   ros::Subscriber p_sub = nh.subscribe<rs_autonomy::AInfo>("/AInfo",
                                                          3,
-							 aInfoSubCallback);
+                                                         &AInfoListener::callback,
+                                                         &listener);
+
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {
-    if (a) {
-      p_pub.publish(p_msg);
-      a = false;
-    }
-
     ros::spinOnce();
     rate.sleep();
   }

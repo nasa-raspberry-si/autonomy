@@ -30,12 +30,17 @@
         output="screen">
   </node>
 
-  <!--
   <node pkg="rs_autonomy"
         name="knowledge_node"
         type="knowledge_node"
         output="screen">
   </node>
-  -->
+
+  <node pkg="rs_autonomy"
+        name="autonomy_node"
+        type="autonomy_node"
+        output="screen">
+  </node>
+
 
 </launch>

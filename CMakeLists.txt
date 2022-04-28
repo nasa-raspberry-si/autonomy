@@ -21,10 +21,12 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(
   FILES
-  EInfo.msg
   MInfo.msg
   AInfo.msg
   PInfo.msg
+  EInfo.msg
+  KInfo.msg
+  AuInfo.msg
 )
 
 

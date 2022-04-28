@@ -45,8 +45,11 @@ add_executable(execute_node execute_node.cpp)
 add_dependencies(execute_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
-# add_executable(knowledge_node knowledge_node.cpp)
-# add_executable(knowledge_node autonomy_node.cpp)
+add_executable(knowledge_node knowledge_node.cpp)
+add_dependencies(knowledge_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+add_executable(autonomy_node autonomy_node.cpp)
+add_dependencies(autonomy_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 
@@ -66,18 +69,18 @@ target_link_libraries(execute_node
   ${catkin_LIBRARIES}
 )
 
-#target_link_libraries(knowledge_node
-#  ${catkin_LIBRARIES}
-#  ${LIB_NAME})
+target_link_libraries(knowledge_node
+  ${catkin_LIBRARIES}
+  ${LIB_NAME})
 
-#target_link_libraries(autonomy_node
-#  ${catkin_LIBRARIES}
-#  ${LIB_NAME})
-
-
+target_link_libraries(autonomy_node
+  ${catkin_LIBRARIES}
+  ${LIB_NAME})
 
 
-install(TARGETS monitor_node analysis_node planner_node execute_node
+
+
+install(TARGETS monitor_node analysis_node planner_node execute_node knowledge_node autonomy_node
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(
