@@ -6,6 +6,8 @@
 #include <rs_autonomy/MInfo.h>
 #include <rs_autonomy/AInfo.h>
 
+//Others
+#include "message_passing_support.h" // for msg_queue_size
 
 class MInfoListener {
   public:
@@ -33,9 +35,9 @@ int main(int argc, char* argv[])
   ros::NodeHandle nh;
 
   MInfoListener listener;
-  listener.pub =  nh.advertise<rs_autonomy::AInfo>("/AInfo", 3); 
+  listener.pub =  nh.advertise<rs_autonomy::AInfo>("/AInfo", msg_queue_size); 
   ros::Subscriber a_sub = nh.subscribe<rs_autonomy::MInfo>("/MInfo",
-                                                         3,
+                                                         msg_queue_size,
                                                          &MInfoListener::callback,
                                                          &listener);
 

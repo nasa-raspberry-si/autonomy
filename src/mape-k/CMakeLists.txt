@@ -1,33 +1,4 @@
-set (HEADERS
-  joint_support.h
-  subscriber.h
-  action_support.h
-  adapter_support.h
-  PlexilInterface.h
-  OwExecutive.h
-  OwInterface.h
-  CommonAdapter.h
-  OwAdapter.h
-  PlexilPlanSelection.h
-  TerminalPlanSelection.h
-)
-
-set (SOURCES
-  subscriber.cpp
-  action_support.cpp
-  adapter_support.cpp
-  PlexilInterface.cpp
-  OwExecutive.cpp
-  OwInterface.cpp
-  CommonAdapter.cpp
-  OwAdapter.cpp
-  PlexilPlanSelection.cpp
-  TerminalPlanSelection.cpp
-)
-
-
 add_definitions(-DUSING_ROS)
-
 
 
 add_executable(monitor_node monitor_node.cpp)
@@ -71,12 +42,11 @@ target_link_libraries(execute_node
 
 target_link_libraries(knowledge_node
   ${catkin_LIBRARIES}
-  ${LIB_NAME})
+)
 
 target_link_libraries(autonomy_node
   ${catkin_LIBRARIES}
-  ${LIB_NAME})
-
+)
 
 
 

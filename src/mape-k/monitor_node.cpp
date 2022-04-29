@@ -6,9 +6,10 @@
 #include <ow_plexil/CurrentTask.h>
 #include <rs_autonomy/MInfo.h>
 
+//Others
+#include "message_passing_support.h" // for msg_queue_size
 
-
-
+/*
 bool t = false;
 rs_autonomy::MInfo m_msg;
 
@@ -21,8 +22,9 @@ void taskSubCallback(const ow_plexil::CurrentTask current_task)
 
   t = true;
 }
+*/
 
-/*
+
 class CurrentTaskListener {
   public:
     ros::Publisher pub;
@@ -34,12 +36,12 @@ void CurrentTaskListener::callback(const ow_plexil::CurrentTask current_task)
 {
   ROS_INFO_STREAM("[Monitor Node - Listener] current task: " << current_task.task_name << ", status: " << current_task.task_status);
 
-  this->current_task.task_name = current_task.task_name + "-ML";
+  this->current_task.task_name = current_task.task_name + "-M";
   this->current_task.task_status = current_task.task_status;
 
   this->pub.publish(this->current_task);
 }
-*/
+
 
 int main(int argc, char* argv[])
 {
@@ -49,27 +51,30 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
 
-  ros::Publisher m_pub = nh.advertise<rs_autonomy::MInfo>("/MInfo", 3);
-  ros::Subscriber m_sub = nh.subscribe<ow_plexil::CurrentTask>("/CurrentTask",
-                                                         3,
-							 taskSubCallback);
   /*
+  ros::Publisher m_pub = nh.advertise<rs_autonomy::MInfo>("/MInfo", 10);
+  ros::Subscriber m_sub = nh.subscribe<ow_plexil::CurrentTask>("/CurrentTask",
+                                                         10,
+							 taskSubCallback);
+  */
+
   CurrentTaskListener listener;
-  listener.pub =  nh.advertise<rs_autonomy::MInfo>("/MInfo", 3); 
+  listener.pub =  nh.advertise<rs_autonomy::MInfo>("/MInfo", msg_queue_size); 
   ros::Subscriber ml_sub = nh.subscribe<ow_plexil::CurrentTask>("/CurrentTask",
-                                                         3,
+                                                         msg_queue_size,
 							 &CurrentTaskListener::callback,
 							 &listener);
-  */
+  
 
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {
-
+    /*
     if(t) {
       m_pub.publish(m_msg);
       t = false;
     }
+    */
     ros::spinOnce();
     rate.sleep();
   }

@@ -6,6 +6,8 @@
 #include <rs_autonomy/AuInfo.h>
 #include <rs_autonomy/KInfo.h>
 
+//Others
+#include "message_passing_support.h" // for msg_queue_size
 
 class AuInfoListener {
   public:
@@ -34,11 +36,11 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
 
-  ros::Publisher au_pub = nh.advertise<rs_autonomy::AuInfo>("/AuInfo", 3);
+  ros::Publisher au_pub = nh.advertise<rs_autonomy::AuInfo>("/AuInfo", msg_queue_size);
 
   AuInfoListener listener(au_pub);
   ros::Subscriber au_sub = nh.subscribe<rs_autonomy::KInfo>("/KInfo",
-		  					 3,
+		  					 msg_queue_size,
 							 &AuInfoListener::callback,
 							 &listener);
 

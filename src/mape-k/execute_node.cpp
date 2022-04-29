@@ -6,7 +6,8 @@
 #include <rs_autonomy/PInfo.h>
 #include <rs_autonomy/EInfo.h>
 
-
+//Others
+#include "message_passing_support.h" // for msg_queue_size
 
 class PInfoListener {
   public:
@@ -34,9 +35,9 @@ int main(int argc, char* argv[])
   ros::NodeHandle nh;
 
   PInfoListener listener;
-  listener.pub =  nh.advertise<rs_autonomy::EInfo>("/EInfo", 3);
+  listener.pub =  nh.advertise<rs_autonomy::EInfo>("/EInfo", msg_queue_size);
   ros::Subscriber e_sub = nh.subscribe<rs_autonomy::PInfo>("/PInfo",
-                                                         3,
+                                                         msg_queue_size,
                                                          &PInfoListener::callback,
                                                          &listener);
 
