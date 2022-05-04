@@ -27,6 +27,7 @@ add_message_files(
   EInfo.msg
   KInfo.msg
   AuInfo.msg
+  PlannerInstruction.msg
 )
 
 

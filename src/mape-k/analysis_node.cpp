@@ -20,7 +20,7 @@ void MInfoListener::callback(const rs_autonomy::MInfo current_task)
 {
   ROS_INFO_STREAM("[Analysis Node - Listener] current task: " << current_task.task_name << ", status: " << current_task.task_status);
 
-  this->current_task.task_name = current_task.task_name + "-A";
+  this->current_task.task_name = current_task.task_name;
   this->current_task.task_status = current_task.task_status;
 
   this->pub.publish(this->current_task);

@@ -21,7 +21,7 @@ void AInfoListener::callback(const rs_autonomy::AInfo current_task)
 {
   ROS_INFO_STREAM("[Knowledge Node - Listener] current task: " << current_task.task_name << ", status: " << current_task.task_status);
 
-  this->current_task.task_name = current_task.task_name + "-K";
+  this->current_task.task_name = current_task.task_name;
   this->current_task.task_status = current_task.task_status;
 
   this->pub.publish(this->current_task);
