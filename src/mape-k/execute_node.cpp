@@ -48,7 +48,7 @@ class PlannerInstructionListener {
   public:
     ros::Publisher pub;
     ow_plexil::PlanSelection execute_instruction;
-    ros::ServiceClient planSelectionServiceClient;
+    ros::ServiceClient plan_selection_service_client;
 
     void callback(const rs_autonomy::PlannerInstruction planner_instruction);
 };
@@ -86,7 +86,7 @@ void PlannerInstructionListener::callback(const rs_autonomy::PlannerInstruction 
     );
 
   // Send the execute instruction to the ROS service /plexil_plan_selection 
-  if(planSelectionServiceClient.call(execute_instruction))
+  if(plan_selection_service_client.call(execute_instruction))
   {
     ROS_INFO("[Execute Node - Listener] The execute instruction is successfully recieved.");
   }
@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
 
 
   PlannerInstructionListener piListener;
-  piListener.planSelectionServiceClient = nh.serviceClient<ow_plexil::PlanSelection>("/plexil_plan_selection");
+  piListener.plan_selection_service_client = nh.serviceClient<ow_plexil::PlanSelection>("/plexil_plan_selection");
   ros::Subscriber el_sub = nh.subscribe<rs_autonomy::PlannerInstruction>("/PlannerInstruction",
                                                          msg_queue_size,
                                                          &PlannerInstructionListener::callback,
