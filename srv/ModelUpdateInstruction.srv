@@ -1,0 +1,9 @@
+# Input
+# task_name is the name of current task, e.g., Exca
+# model_names is a list of models that need to be updated
+string task_name
+string[] model_names
+---
+# Output
+# success tells if the update request is successfully performed.
+bool success

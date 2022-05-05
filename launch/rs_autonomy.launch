@@ -32,7 +32,7 @@
 
   <node pkg="rs_autonomy"
         name="knowledge_node"
-        type="knowledge_node"
+        type="knowledge_maitenance.py"
         output="screen">
   </node>
 

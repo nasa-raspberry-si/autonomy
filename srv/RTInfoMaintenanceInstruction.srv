@@ -1,0 +1,11 @@
+# Input
+# task_name: e.g., Exca
+# action: Initialize, Update or Remove
+# aux_info: its semantic differs based on the type of action
+string task_name
+string action
+string aux_info
+---
+# output whether or not call was successful
+# if it is successful, it indicates the current knowledge is update-to-date
+bool success

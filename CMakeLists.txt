@@ -30,6 +30,11 @@ add_message_files(
   PlannerInstruction.msg
 )
 
+add_service_files(
+  FILES
+  RTInfoMaitenanceInstruction.srv  # maintain runtime info
+  ModelUpdateInstruction.srv
+)
 
 generate_messages(
   DEPENDENCIES 
@@ -67,4 +72,10 @@ add_subdirectory(src)
 #############
 
 
+# Mark executable scripts (Python etc.) for installation
+# in contrast to setup.py, you can choose the destination
+catkin_install_python(PROGRAMS
+   scripts/knowledge_maintenance.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
