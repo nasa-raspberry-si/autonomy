@@ -1,0 +1,109 @@
+// Role of The Analysis Component
+// * Pull information from Monitor componenet
+// * Send requests to Knowledge component to update models and maintain runtime info
+// * Determine what adaptation is needed for the current task
+// * Send adaptation instruction to the Plan componenet
+// * Comunicate with the Mission componenet to report the task status and/or start a new task
+
+
+
+// Currently, the adaptation_analysis implements four cases in excavation scenario
+// FIXME: for other excavation cases and cases in other task (sample identification)
+//        this function needs to be updated accordingly
+//
+// [Descriptions of Four Cases]
+  // case 1: digging fails due to an incorrectly estiamted excavation probability
+  // Monitoring Information
+  //   - status of digging operation
+  //   - arm fault signal
+  //     (simualte the failure of digging by checking excavation probability p against a random
+  //     number p' between 0 and 1. And trigger an arm faul if p' > p since it indicates a
+  //     digging failure. The checking will only be checked after the digging operation starts.
+  //     Currently, the checking is performed in the analysis componenet. 
+  //     Arm fault can have other semantics in other cases)
+  // Adaptation Trigger:
+  //   - when an arm fault signal is notified during digging operation
+  //     (starts but not finishes), it indicates an digging failure.
+  // Adaptation:
+  //   - Unstow the arm
+  //   - Remove the current excavation location and synthesize a new plan with the rest
+  //     locations
+  //
+  // case 2: the beliefs of supporting machine-learning models drop below predefined thresholds
+  // Monitoring Information
+  //   - the number of digging failures due to incorrectly estimated excavation probability
+  // Adaptation Trigger:
+  //   - number of failure == 2, update the excavation probability model
+  //   - number of failure == 3, update both excavation probability model andn science model. That is,
+  //     a new list of locations will be provided.
+  // Adaptation:
+  //   - Unstow the arm (this is specific for the excavation scenario)
+  //   - Update models
+  //   - Update runtime information (the lists of locations for excavation scenario)
+  //   - Synthesize a new plan
+  //
+  // case 3: surface vibration caused by earthquake
+  // Monitoring Information
+  //   - vibration level
+  // Adaptation Trigger:
+  //   - vibration level: (a level of 0 is considered as normal and no adaptation is required for it)
+  //     * level == 1: the terrain has be changed. The models and runtime info need to be updated
+  // Adaptation:
+  //     * level == 1: stop the current plan, unstow the arm, update models and runtime info and
+  //                  re-planning after the vibration level comes back to 0
+  //
+  // case 4: an arm fault is detected during executing a plan for excavation task
+  // Monitoring Information:
+  //   - arm fault signal
+  // Adaptation Trigger:
+  //   - the arm fault is notified
+  // Adaptation:
+  //   - number of failures will be increased
+  //   - use the adaptation in either case 1 or case 2 depending on the current number of failures
+  //
+  // case 5: a manual plan sent from the Earth center
+  // Monitoring Information
+  //   - hasManualPlan
+  //   - plan name
+  // Adaptation Trigger:
+  //   - hasManualPlan: True
+  // Adaptation:
+  //   - Terminate the current plan
+  //   - Drive the lander to run the manual plan
+  //
+  // case 6: has a new task and need to terminate the current task
+  // Monitoring Information
+  //   - has_new_task
+  //   - terminate_current_task
+  // Adaptation Trigger:
+  //   - has_new_task: True
+  //   - terminate_current_task: True
+  // Adaptation:
+  //   - Terminate the current plan
+  //   - Move the next task to the current task (update related variables)
+  //   - Synthesize a plan for the new task and run it 
+  //
+  // case 7: the current task finishes and has a new task needs
+  // Monitoring Information
+  //   - has_new_task
+  //   - terminate_current_task
+  // Adaptation Trigger:
+  //   - has_new_task: True
+  //   - terminate_current_task: False
+  // Adaptation:
+  //   - Move the next task to the current task (update related variables)
+  //   - Synthesize a plan for the new task and run it 
+  //
+// [The order of adaptation priority]
+// Order  Priority                                           Case
+// 0      High                                               case 5 - Manual Plan, hasManualPlan == True
+// 1      High (update all models and rt info, new plan)     case 3 - Earthquake, vibration level 1
+// 2      High (stop, update models and rt info, new plan)   case 6 - Do a new task instead of the current one
+// 3      Medium (update all models and rt info, new plan)   case 2 - Decreased Belief, # of failures == 3
+// 4      Medium (update one model and rt info, new plan)    case 2 - Decreased Belief, # of failures == 2
+// 5      Low    (update rt info, new plan)                  case 1 - Digging Failure
+// 6      Low    (start new task)                            case 7 - Starts New Task
+// Note: case 4 falls through case 1 and case 2.
+
+
+

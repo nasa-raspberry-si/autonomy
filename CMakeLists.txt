@@ -27,7 +27,12 @@ add_message_files(
   EInfo.msg
   KInfo.msg
   AuInfo.msg
+  NextTask.msg
   PlannerInstruction.msg
+  AdaptationInstruction.msg
+  VibrationLevel.msg
+  EarthInstruction.msg
+  ArmFault.msg
 )
 
 add_service_files(
