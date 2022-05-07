@@ -5,6 +5,7 @@ project(rs_autonomy)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  dynamic_reconfigure # for clearing faults
   roscpp
   rospy
   roslib
@@ -39,6 +40,7 @@ add_service_files(
   FILES
   RTInfoMaitenanceInstruction.srv  # maintain runtime info
   ModelUpdateInstruction.srv
+  ArmFaultConfig.srv
 )
 
 generate_messages(
@@ -84,3 +86,7 @@ catkin_install_python(PROGRAMS
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+catkin_install_python(PROGRAMS
+   scripts/fault_management.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

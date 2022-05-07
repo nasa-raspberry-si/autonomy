@@ -32,7 +32,13 @@
 
   <node pkg="rs_autonomy"
         name="knowledge_node"
-        type="knowledge_maitenance.py"
+        type="knowledge_maintenance.py"
+        output="screen">
+  </node>
+
+  <node pkg="rs_autonomy"
+        name="fault_management_node"
+        type="fault_management.py"
         output="screen">
   </node>
 

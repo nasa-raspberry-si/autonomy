@@ -1,0 +1,11 @@
+# Input
+# action: "Inject or "Clear"
+# arm_fault_var_ids: an array of numbers that fall in [1,2,3,4,5,6]
+# values: an array of boolean values, the array has the same size of arm_fault_var_ids
+string action
+int32[] arm_fault_var_ids
+bool[] values
+---
+# Output
+# success tells if the fault management request is successfully performed.
+bool success
