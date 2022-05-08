@@ -15,32 +15,38 @@ import random
 import json
 
 # RT is short for Runtime
+# Each update of runtime info will overwrite the rt_info.json file
+# in the directory, EVALUATION_ROOT_DIR/Tasks/TaskName
+# When a planning is triggered, the planner, the user of rt_info.json
+# should copy rt_info.json to the directory of the current plan
 class RuntimeInfoMaintenance():
     def __init__(
-            self, task_name="", models_dir="", model_names=["SciVal", "ExcaProb"],
+            self, task_name="", eval_root_dir="", model_names=["SciVal", "ExcaProb"],
             debug=False):
         self.task_name = task_name
         self.model_names = model_names
         self.loc_pool = gen_loc_pool()
         self.debug = debug
-        self.models_dir=models_dir
+        self.eval_root_dir=eval_root_dir
         self.runtime_info = {}
+        self.runtime_info_fp = ""
+        self.model_update = None
 
         self.extra_initialization()
 
     # API for use
     # Assist the knowledge_maintaince ROS service
     def extra_initialization(self):
-        if (self.task_name!="") and (self.models_dir!=""):
-            self.model_updater = ModelUpdater(self.models_dir, self.model_names)
-            self.runtime_info_fp = self.models_dir + "/" + self.task_name + "-rtInfo.json" 
+        if (self.task_name!="") and (self.eval_root_dir!=""):
+            # Check the doc at, doc/structure_of_evaluation_directory.txt
+            self.runtime_info_fp = self.eval_root_dir + "/Tasks/" + self.task_name + "rt_info.json" 
+            models_dir = self.eval_root_dir + "/Models"
+            self.model_updater = ModelUpdater(models_dir, self.model_names)
             loginfo("The RuntimeInfoMaintenence isntance is fully initialized")
         else:
-            self.model_updater = None
-            self.runtime_info_fp = ""
             loginfo("The RuntimeInfoMaintenence isntance is not fully initialized due to")
             loginfo("\ttask_name: " + self.task_name)
-            loginfo("\tmodels_dir: " + self.models_dir)
+            loginfo("\teval_root_dir: " + self.eval_root_dir)
             loginfo("\tmodel_names: " + str(model_names))
 
 

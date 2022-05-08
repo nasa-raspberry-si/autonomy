@@ -15,15 +15,14 @@ from knowledge_update.maintain_runtime_info import RuntimeInfoMaintenance
 from knowledge_update.maintain_models import ModelUpdater
 
 
-
-# Displaying the parent directory of the script
-script_dir = os.path.dirname(__file__) # NOT including a trailing '/'
-knowledge_base_dir = script_dir + "../knowledge_base"
+# Environment Variables
+# 1 Assist loading run-time info file and dumping synthesized PLEXIL plan to a file
+evaluation_root_dir = os.environ("EVALUATION_ROOT_DIR")
 
 # Partially initialize the instance
 # Wait for the initial requst for a task to fully initialize it
 knowledge_maintenance = RuntimeInfoMaintenance()
-knowledge_maintenance.models_dir = knowledge_base_dir
+knowledge_maintenance.eval_root_dir = evaluation_root_dir
 is_km_fully_initialized = False
 
 ##################
@@ -35,7 +34,6 @@ is_km_fully_initialized = False
 # FIXME: currently only consider the excavation scenario  
 def maintain_runtime_info(req):
     loginfo("Progressing the runtime maintaince request")
-    global knowledge_base_dir # NOT including a trailing '/'
     global knowledge_maintenance
     global is_km_fully_initialized
 
@@ -72,7 +70,6 @@ def maintain_runtime_info(req):
 
 def update_models(req):
     loginfo("Progressing the model update request")
-    global knowledge_base_dir # NOT including a trailing '/'
     global knowledge_maintenance
     global is_km_fully_initialized
 
