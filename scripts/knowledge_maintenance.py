@@ -11,8 +11,8 @@ from rs_autonomy.srv import RTInfoMaintenanceInstruction, RTInfoMaintenanceInstr
 from rs_autonomy.srv import ModelUpdateInstruction, ModelUpdateInstructionResponse
 
 # knowledge_maintenance_tool package
-from knowledge_maintenance_tool.maintain_runtime_info import KnowledgeMaintenance
-from knowledge_maintenance_tool.maintain_models import ModelUpdater
+from knowledge_update.maintain_runtime_info import RuntimeInfoMaintenance
+from knowledge_update.maintain_models import ModelUpdater
 
 
 
@@ -22,7 +22,7 @@ knowledge_base_dir = script_dir + "../knowledge_base"
 
 # Partially initialize the instance
 # Wait for the initial requst for a task to fully initialize it
-knowledge_maintenance = KnowledgeMaintenance()
+knowledge_maintenance = RuntimeInfoMaintenance()
 knowledge_maintenance.models_dir = knowledge_base_dir
 is_km_fully_initialized = False
 
@@ -68,7 +68,7 @@ def maintain_runtime_info(req):
     else:
         result = False
 
-    return KnowledgeMaintenanceInstructionResponse(result)
+    return RTInfoMaintenanceInstructionResponse(result)
 
 def update_models(req):
     loginfo("Progressing the model update request")
