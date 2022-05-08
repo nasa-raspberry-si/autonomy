@@ -3,13 +3,18 @@
 from __future__ import print_function
 
 import os
+from subprocess import Popen, PIPE
+
 import rospy
 from rospy import loginfo
 
 # ROS services
 from rs_autonomy.srv import TaskPlanning, TaskPlanningResponse
+# Prism Model Genration
 from prism-planning.gen_prism_model import ExcaPrismModelGenerator
 
+# Environment Variables
+# 1 Assist loading run-time info file and dumping synthesized PLEXIL plan to a file
 evaluation_root_dir = os.environ("EVALUATION_ROOT_DIR")
 
 

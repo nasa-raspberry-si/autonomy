@@ -3,16 +3,25 @@
 from __future__ import print_function
 
 import os
+from subprocess import Popen, PIPE
+
 import rospy
 from rospy import loginfo
 
 # ROS services
 from rs_autonomy.srv import PlanTranslation, PlanTranslationResponse
-
+# PLEXIL plan translation
 from plan-translation.plexil_plan_translator import PlexilPlanTranslator
 
+# Environment Variables
+# 1 Assist loading run-time info file and dumping synthesized PLEXIL plan to a file
 evaluation_root_dir = os.environ("EVALUATION_ROOT_DIR")
-
+# 2 Assist compiling C++-like '#include' headers in synthesized PLEXIL plan (*.plp)
+#   ow_simulator : '#include "plan-interface.h"'
+#   owlat        : '#include "owlat-interface.h"'
+ow_plexil_lib_source_dir = os.environ("OW_PLEXIL_LIB_SOURCE_DIR")
+# 3 Assist moving the compiled PLEXIL plan (*.plx) to the destination
+plexil_lib_compiled_plan_dir = os.environ("PLEXIL_LIB_COMPILED_PLAN_DIR")
 
 class PlanTranslation:
     def __init__(self):
@@ -44,7 +53,19 @@ class PlanTranslation:
                 plan_name,
                 current_plan_dir,
                 high_level_plan)
-        
+
+        # Step 3 
+        # * Compile the PLEXIL plan: plp file to plx file
+        # * Move the plx file to the library (<oceanwater_ws>/devel/etc/plexil) of compiled
+        #   PLEXIL plans that is inside the devel directory of oceanwater workspace 
+        plan_filename = plan_name + ".plp"
+        plan_fp = current_plan_dir + "/" + plan_filename 
+        loginfo("[Plan Translation - Step 3] Compiling the PLEXIL plan file " + plan_filename)
+        cmd_plan_compilation = "plexilc -I " + ow_plexil_lib_source_dir + " -O " + plexil_lib_compiled_plan_dir + plan_fp 
+        loginfo("CMD To Run: " + cmd_plan_translation)
+        p_pe = Popen(cmd_plan_compilation, shell=True, stdout=PIPE, stderr=PIPE)
+        stdout, stderr = p_pe.communicate()
+
 
     def callback_plan_translation(self, req):
     {

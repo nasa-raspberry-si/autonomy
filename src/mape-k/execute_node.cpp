@@ -71,11 +71,18 @@ void PlannerInstructionListener::callback(const rs_autonomy::PlannerInstruction 
   if (planner_inst.command == "ADD" && planner_inst.aux_info != "")
   { 
     // When the command is "ADD", the aux_info represents the high-level plan
+    //
+    // The plan_name in planner_instruction is the name of the root node in the,
+    // plexil plan, e.g., Exca. While the plan name sent to be executed on the lander
+    // should be the full file name of the compiled plexil plan, e.g., Exca.plx.
     plan_translation.task_name = planner_inst.task_name;
     plan_translation.plan_name = planner_inst.plan_name;
     plan_translation.high_level_plan = planner_inst.aux_info;
 
-    // After translation, we get a PLEXIL plan (*.plp file)
+    // After calling translation service successfully, we get a
+    // PLEXIL plan (*.plp file) and a compiled PLEXIL plan (*.plx file)
+    //
+    // The *.plx is the name sent to ow_exec node / owlat_exec node for execution.
     if(plan_translation_service_client.call(plan_translation))
     {
       ROS_INFO("[Execute Node] The plan translation is performed.");
@@ -90,12 +97,7 @@ void PlannerInstructionListener::callback(const rs_autonomy::PlannerInstruction 
   // FIXME: The current autonomy design leads to that there is only one plexil 
   //        plan in the plan array, plans.
   std::vector<std::string> plan_array;
-  // * plan_name in planner_instruction is the name of the root node in the plexil plan,
-  //   e.g., Exca. While the plan name sent to be executed on the lander should be full
-  //   file name of the plexil plan, e.g., Exca.plp.
-  // * We leave the compilation of the PLEXIL plan in the PLEXIL executive. That is,
-  //   we send a Exca.plp to ow_exec or owlat_exec and have it compiled and run there.
-  plan_array.push_back(planner_instruction.plan_name + ".plp");
+  plan_array.push_back(planner_instruction.plan_name + ".plx");
 
   execute_instruction.request.command = planner_inst.command;
   execute_instruction.request.plans = plan_array;
