@@ -1,0 +1,11 @@
+# Input
+# task_name is used to pick the corresponding runtime info file for planning
+# plan_name is the name of the new plan
+string task_name
+string plan_name
+---
+# Output
+# success tells if the planning request is successfully performed.
+# high_level_plan, e.g. "[sel_xloc1, sel_dloc6]", is output after querying a Prism model. 
+bool success
+string high_level_plan

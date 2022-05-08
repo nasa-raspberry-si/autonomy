@@ -4,7 +4,6 @@
   <arg name="plan" default="None"/>
 
 
-
   <node pkg="rs_autonomy"
         name="monitor_node"
         type="monitor_node"
@@ -39,6 +38,18 @@
   <node pkg="rs_autonomy"
         name="fault_management_node"
         type="fault_management.py"
+        output="screen">
+  </node>
+
+  <node pkg="rs_autonomy"
+        name="task_planning_node"
+        type="task_planning.py"
+        output="screen">
+  </node>
+
+  <node pkg="rs_autonomy"
+        name="plan_translation_node"
+        type="plexil_plan_translator.py"
         output="screen">
   </node>
 

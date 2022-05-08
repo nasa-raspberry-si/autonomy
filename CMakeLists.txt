@@ -19,6 +19,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
 )
 
+## Setup the installation of python scripts and modules
+catkin_python_setup()
 
 add_message_files(
   FILES
@@ -41,6 +43,8 @@ add_service_files(
   RTInfoMaitenanceInstruction.srv  # maintain runtime info
   ModelUpdateInstruction.srv
   ArmFaultConfig.srv
+  TaskPlanning.srv
+  PlanTranslation.srv
 )
 
 generate_messages(
@@ -90,3 +94,14 @@ catkin_install_python(PROGRAMS
    scripts/fault_management.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+catkin_install_python(PROGRAMS
+   scripts/task_planning.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+catkin_install_python(PROGRAMS
+   scripts/plexil_plan_translator.py
+   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+

@@ -3,78 +3,113 @@
 #include <ros/package.h>
 
 // OW
-#include <rs_autonomy/AInfo.h>
-#include <rs_autonomy/PInfo.h>
+#include <rs_autonomy/AdaptationInstruction.h>
 #include <rs_autonomy/PlannerInstruction.h>
+#include <rs_autonomy/TaskPlanning.h>
 
 //Others
 #include "message_passing_support.h" // for msg_queue_size
+#include <string>
 
-class AInfoListener {
-  public:
-    ros::Publisher pub;
-    rs_autonomy::PInfo current_task;
-    void callback(const rs_autonomy::AInfo current_task);
-};
-
-void AInfoListener::callback(const rs_autonomy::AInfo current_task)
-{
-  ROS_INFO_STREAM("[Planner Node - Listener] current task: " << current_task.task_name << ", status: " << current_task.task_status);
-
-  this->current_task.task_name = current_task.task_name;
-  this->current_task.task_status = current_task.task_status;
-
-  this->pub.publish(this->current_task);
-}
 
 class AdaptationInstructionListener {
   public:
-    ros::Publisher pub;
+    // publisher
+    ros::Publisher planner_inst_pub;
     rs_autonomy::PlannerInstruction planner_instruction;
-    void callback(const rs_autonomy::AInfo current_task);
+
+    // callback for subscriber
+    void callback_adap_inst_sub(const rs_autonomy::AdaptationInstruction adpt_inst);
+
+    // ROS clients for calling '/task_planning' service
+    rs_autonomy::TaskPlanning task_planning;
+    ros::ServiceClient task_planning_service_client;
+
+    // For one task, we use one plan template and fill it with
+    // runtime info to turn it into a complete PLEXIL plan (*.plp file)
+    // Since one task may needs run several plans, we format the names
+    // of these plans as "<task_name><plan_id>", e.g., "Exca1", "Exca2".
+    std::string task_name = "";
+    std::string current_plan_name = "";
+    int current_plan_id = 0; // 0 indiates no plan has been tried for the task
 };
 
-void AdaptationInstructionListener::callback(const rs_autonomy::AInfo current_task)
+void AdaptationInstructionListener::callback_adap_inst_sub(const rs_autonomy::AdaptationInstruction adpt_inst)
 {
-  //ROS_INFO_STREAM("[Planner Node - Listener] current task: " << current_task.task_name << ", status: " << current_task.task_status);
+  for (auto command : adpt_inst.adaptation_commands)
+  {
+    bool is_valid_cmd = true;
+    if (command == "TerminatePlan")
+    {
+      planner_instruction.command = "TERMINATE";
+      planner_instruction.plan_name = current_plan_name;
+      planner_instruction.aux_info = "";
+    }
+    else if (command == "ClearArmFault")
+    {
+      planner_instruction.command = "ClearArmFault";
+      planner_instruction.plan_name = current_plan_name;
+      planner_instruction.aux_info = "";
+    }
+    else if (command == "Unstow") // send a PLEXIL plan for unstowing the arm
+    {
+      planner_instruction.command = "ADD";
+      planner_instruction.plan_name = Unstow;
+      planner_instruction.aux_info = "";
+    }
+    else if (command.find("ManualPlan") != std::string::npos)
+    {
+      planner_instruction.command = "ADD";
+      planner_instruction.plan_name = command; // the command variable is the plan name
+      planner_instruction.aux_info = "";
+    }
+    else if (command == "Planning") // current task and new task
+    { 
+      if (task_name == adpt_inst.task_name)
+      {
+        current_plan_id += 1;
+      }
+      else
+      {
+	task_name = adpt_inst.task_name;
+        current_plan_id = 1; // frist plan for the new task
+      }
+      current_plan_name = task_name + std::to_string(current_plan_id);
 
-  // For testing execute node
-  if (current_task.task_name == "GuardedMove"
-       && current_task.task_status.find("starts") != std::string::npos)
-  {
-    this->planner_instruction.command = "SUSPEND";
-    this->planner_instruction.plan_name = current_task.task_name;
-    this->planner_instruction.high_level_plan = ""; // no need to provide, so use the emtpy string
-  }
-  else if (current_task.task_name == "GuardedMove"
-       && current_task.task_status.find("finishes") != std::string::npos)
-  {
-    this->planner_instruction.command = "RESUME";
-    this->planner_instruction.plan_name = current_task.task_name;
-    this->planner_instruction.high_level_plan = ""; // no need to provide, so use the emtpy string
-  }
-  else if (current_task.task_name == "GroundDetection"
-    && current_task.task_status.find("finishes") != std::string::npos)
-  {
-    this->planner_instruction.command = "TERMINATE";
-    this->planner_instruction.plan_name = current_task.task_name;
-    this->planner_instruction.high_level_plan = ""; // no need to provide, so use the emtpy string
-  }
-  else
-  {
-    this->planner_instruction.command = "NoAction";
-    this->planner_instruction.plan_name = current_task.task_name;
-    this->planner_instruction.high_level_plan = ""; // no need to provide, so use the emtpy string  
-  }
+      if (task_planning_service_client.call(task_planning))
+      {
+        ROS_INFO_STREAM("[Planner Node] high-level plan is " << task_planning.response.high_level_plan);
 
-  ROS_INFO_STREAM(
-    "[Planner Node - Listener] planner instruction for the current task: "
-    << "\n\tcommand: " << this->planner_instruction.command
-    << "\n\tplan_name:" << this->planner_instruction.plan_name
-    << "\n\thigh_level_plan: " << this->planner_instruction.high_level_plan
-    );
+        planner_instruction.command = "ADD";
+        planner_instruction.plan_name = current_plan_name;
+        planner_instruction.aux_info = task_planning.response.high_level_plan;
+      }
+      else
+      {
+        // FIXME: notify the failure to the analysis componenet
+	ROS_ERROR("[Planner Node] unable to talk to /task_planning service. Planning fails.")
+      }
+    }
+    else
+    {
+      is_valid_cmd = false;
+      ROS_INFO_STREAM("[Planner Node] receives an unknown adaptation command, " << command);
+    }
 
-  this->pub.publish(this->planner_instruction);
+    if (is_valid_cmd)
+    {
+      ROS_INFO_STREAM("[Planner Node] receives an adaptation command: " << command);
+      this->planner_inst_pub.publish(this->planner_instruction);
+
+      ROS_INFO_STREAM(
+        "[Planner Node - Listener] send a planner instruction for the current task: "
+        << "\n\tcommand: " << this->planner_instruction.command
+        << "\n\tplan_name:" << this->planner_instruction.plan_name
+        << "\n\taux_info: " << this->planner_instruction.aux_info
+      )
+    }
+  }
+  
 }
 
 int main(int argc, char* argv[])
@@ -85,21 +120,19 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
 
-  AInfoListener listener;
-  listener.pub =  nh.advertise<rs_autonomy::PInfo>("/PInfo", msg_queue_size);
-  ros::Subscriber p_sub = nh.subscribe<rs_autonomy::AInfo>("/AInfo",
-                                                         msg_queue_size,
-                                                         &AInfoListener::callback,
-                                                         &listener);
-
   AdaptationInstructionListener adptListener;
-  adptListener.pub =  nh.advertise<rs_autonomy::PlannerInstruction>("/PlannerInstruction", msg_queue_size);
-  ros::Subscriber pl_sub = nh.subscribe<rs_autonomy::AInfo>("/AInfo",
-                                                         msg_queue_size,
-                                                         &AdaptationInstructionListener::callback,
-                                                         &adptListener);
 
+  adptListener.planner_inst_pub =  nh.advertise<rs_autonomy::PlannerInstruction>(
+		  "/PlannerInstruction",
+		  msg_queue_size);
 
+  ros::Subscriber adap_inst_sub = nh.subscribe<rs_autonomy::AdaptationInstruction>(
+		  "/AdaptationInstruction",
+		  msg_queue_size,
+		  &AdaptationInstructionListener::callback_adap_inst_sub,
+		  &adptListener);
+
+  adptListener.task_planning_service_client = nh.serviceClient<rs_autonomy::TaskPlanning>("/task_planning"); 
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {
