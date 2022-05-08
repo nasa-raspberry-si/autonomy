@@ -2,7 +2,21 @@
 
 <launch>
   <arg name="plan" default="None"/>
+  <!--
+  Environment Variables
+  1 EVALUATION_ROOT_DIR
+	assists loading run-time info file and dumping synthesized PLEXIL plan to a file
+  2 OW_PLEXIL_LIB_SOURCE_DIR
+	assists compiling C++-like '#include' headers in synthesized PLEXIL plan (*.plp)
+	ow_simulator : '#include "plan-interface.h"'
+	owlat        : '#include "owlat-interface.h"'
+  3 PLEXIL_LIB_COMPILED_PLAN_DIR
+	assists moving the compiled PLEXIL plan (*.plx) to the destination
+  -->
   <env name="EVALUATION_ROOT_DIR" default="None"/>
+  <env name="OW_PLEXIL_LIB_SOURCE_DIR" default="None"/>
+  <env name="PLEXIL_LIB_COMPILED_PLAN_DIR" default="None"/>
+
 
   <node pkg="rs_autonomy"
         name="monitor_node"
