@@ -2,7 +2,7 @@
 
 <launch>
   <arg name="plan" default="None"/>
-
+  <env name="EVALUATION_ROOT_DIR" default="None"/>
 
   <node pkg="rs_autonomy"
         name="monitor_node"
