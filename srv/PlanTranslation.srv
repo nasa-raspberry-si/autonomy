@@ -1,0 +1,11 @@
+# Input
+# task_name is used to pick the corresponding runtime info file for planning
+# plan_name is the name of the new plan
+# high_level_plan is a string and needs to be translated to a executable plan.
+string task_name
+string plan_name
+string high_level_plan
+---
+# Output
+# success tells if the plan translation is successfully performed.
+bool success
