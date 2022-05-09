@@ -17,6 +17,7 @@
 #include <rs_autonomy/ModelUpdateInstruction.h>
 
 #include <rs_autonomy/AdaptationInstruction.h> // send it to the planner componenet
+#include <rs_autonomy/CurrentTask.h> // send it to the mission control componenet
 #include <rs_autonomy/NextTask.h> // published by the Mission Control componenet
 
 // published by the monitor component
@@ -40,6 +41,7 @@ class MonitorInfoListener {
   public:
     // Publisher and message for sending the instruction to the plan component
     ros::Publisher adpt_inst_pub;
+    ros::Publisher current_task_status_pub;
     rs_autonomy::AdaptationInstruction adpt_inst;
 
     // Variables that capture necessary info for adaptation_analysis()
@@ -86,7 +88,7 @@ class MonitorInfoListener {
     void update_task_control_vars();
     void update_models(std::vector<std::string> model_names);
     void maintain_rtInfo(std::string action, std::string aux_info);
-    void initialize_task(bool syn_plan=true); // syn_plan indicates to synthesize a plan
+    void initialize_task(bool syn_plan=true, bool terminate_current_task=false); // syn_plan indicates to synthesize a plan
     void initialize_rtInfo();
     void transition_to_safe_pose();
     void planning();
@@ -117,7 +119,6 @@ void MonitorInfoListener::callback_current_plan(const ow_plexil::CurrentPlan cur
   // for excavation scenario, the aux_info is a string with a format of 
   // "excavation_loc_ID,dump_loc_ID"
   plan_aux_info = current_plan.aux_info;
-  update_local_vars(); 
 }
 
 void MonitorInfoListener::callback_next_task(const rs_autonomy::NextTask next_task)
@@ -128,7 +129,6 @@ void MonitorInfoListener::callback_next_task(const rs_autonomy::NextTask next_ta
   next_task_aux_info = next_task.aux_info;
   model_names = next_task.model_names;
   has_new_task = true;
-  update_local_vars();
 }
 
 void MonitorInfoListener::callback_arm_fault_status(const rs_autonomy::ArmFault arm_fault)
@@ -151,7 +151,7 @@ void MonitorInfoListener::callback_vibration_level_changed(const rs_autonomy::Vi
   ROS_INFO_STREAM("[Analysis Node] the vibration level is changed from level " << vibration_level << " to level " << v_level);
   vibration_level = vl.level;
   wait_for_quake_off = !wait_for_quake_off;
-}
+
 
 void MonitorInfoListener::callback_earth_inst(const rs_autonomy::EarthInstruction earth_inst)
 {
@@ -232,7 +232,12 @@ void MonitorInfoListener::update_task_control_vars()
   terminate_current_task = false; // reset it to false to allow the task to be carried out
   has_new_task = false; // notify the Mission componenet that it can send a new task
 
-  current_task_status = ""; // reset it to "", indicating the task is not starting yet
+  current_task_status = "Ready"; // reset it to "Ready", indicating the task is not starting yet.
+
+  CurrentTask current_task_msg;
+  current_task_msg.name = current_task_name;
+  current_task_msg.status = current_task_status;
+  current_task_status_pub.publish(current_task_msg);
 }
 
 void MonitorListener::initialize_rtInfo()
@@ -260,18 +265,23 @@ void MonitorListener::planning()
   adpt_inst.task_name = current_task_name;
   adpt_inst.adaptation_commands = { "Planning"};
   adpt_inst_pub.publish(adpt_inst);
-
-  current_task_status = "Started";
 }
 
 // Update models and prepare the initial runtime info for the current task
-void MonitorListener::initialize_task(bool syn_plan=true)
+void MonitorListener::initialize_task(bool syn_plan=true, bool terminate_current_task=false)
 {
   // if the current task has been started, there should a plan is running for it,
   // so terminate the plan and transition the lander to the safe pose, Unstow pose.
-  if (current_task_status == "started")
+  if (current_task_status == "Started")
   {
     transition_to_safe_pose();
+    if(terminate_current_task)
+    {
+      CurrentTask current_task_msg;
+      current_task_msg.name = current_task_name;
+      current_task_msg.status = "Terminated";
+      current_task_status_pub.publish(current_task_msg);
+    }
   }
 
   // if there is a new task, update task control variables to transition to the new task 
@@ -288,6 +298,14 @@ void MonitorListener::initialize_task(bool syn_plan=true)
     if (syn_plan) // Synthesize a plan to run
     {
       planning();
+      if(current_task_status == "Ready")
+      {
+        current_task_status = "Started";
+	CurrentTask current_task_msg;
+	current_task_msg.name = current_task_name;
+	current_task_msg.status = current_task_status;
+        current_task_status_pub.publish(current_task_msg);
+      }
     }
   }
 }
@@ -330,7 +348,7 @@ void MonitorInfoListener::adaptation_analysis()
     else if (terminate_current_task && has_new_task) // a new task is requsted to do instead of the current one
     {
       bool syn_plan = true;
-      initialize_task(syn_plan); 
+      initialize_task(syn_plan, terminate_current_task); 
     }
     else if (num_digging_failures == 3) // the belief of models drops two low, such initialize the task
     {
@@ -363,7 +381,7 @@ void MonitorInfoListener::adaptation_analysis()
       planning();
     }
     // When a plan ends with "Complete_Success" status
-    else if (current_task_status=="Completed" && has_new_task) 
+    else if (current_task_status=="Completed_Success" && has_new_task) 
     {
       bool syn_plan = true;
       initialize_task(syn_plan);
@@ -396,6 +414,9 @@ int main(int argc, char* argv[])
   // Publisher for sending adaptation commands to the planner component
   listener.adpt_inst_pub = nh.advertise<rs_autonomy::AdaptationInstruction>(
 		  "/AdaptationInstruction", msg_queue_size);
+
+  listener.current_task_status_pub = nh.advertise<rs_autonomy::CurrentTask>(
+		  "/Analysis/CurrentTask", msg_queue_size);
 
   // callbacks for subscribered ROS topics
   ros::Subscriber next_task_sub = nh.subscribe<rs_autonomy::NextTask>(

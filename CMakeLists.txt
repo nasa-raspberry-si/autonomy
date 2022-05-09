@@ -24,12 +24,7 @@ catkin_python_setup()
 
 add_message_files(
   FILES
-  MInfo.msg
-  AInfo.msg
-  PInfo.msg
-  EInfo.msg
-  KInfo.msg
-  AuInfo.msg
+  CurrentTask.msg
   NextTask.msg
   PlannerInstruction.msg
   AdaptationInstruction.msg

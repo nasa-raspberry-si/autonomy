@@ -68,8 +68,8 @@
   </node>
 
   <node pkg="rs_autonomy"
-        name="autonomy_node"
-        type="autonomy_node"
+        name="mission_control_node"
+        type="mission_control_node"
         output="screen">
   </node>
 
