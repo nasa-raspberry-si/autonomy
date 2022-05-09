@@ -2,6 +2,7 @@
 
 <launch>
   <arg name="plan" default="None"/>
+  <arg name="mission_spec_fp" default="None"/>
   <!--
   Environment Variables
   1 EVALUATION_ROOT_DIR
@@ -70,6 +71,7 @@
   <node pkg="rs_autonomy"
         name="mission_control_node"
         type="mission_control_node"
+        args"$(arg mission_spec_fp)"
         output="screen">
   </node>
 

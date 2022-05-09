@@ -28,7 +28,7 @@ class PlexilPlanTranslator():
 
     # prism_syn_plan: [action1, action2, ...]
     # plexil_plan_name is the name of the plexil node.
-    def translate(self, scenario_ID, runtime_info, plexil_plan_name, plexil_plan_dir, prism_syn_plan, faults):
+    def translate(self, scenario_ID, runtime_info, plexil_plan_name, plexil_plan_dir, prism_syn_plan):
         scenario = self.scenarios_map[scenario_ID]
         # Parse prism_syn_plan
         loginfo("Parsing the synthesized plan by PRISM...")
@@ -37,7 +37,7 @@ class PlexilPlanTranslator():
 
         # Generate the PLEXIL code
         loginfo("Generating the PLEXIL code...")
-        code = self.generate_code(scenario, plan_info, faults)
+        code = self.generate_code(scenario, plan_info)
 
         plexil_plan_fp = os.path.join(plexil_plan_dir, plexil_plan_name+".plp") 
         with open(plexil_plan_fp, "w") as outfile:
@@ -76,16 +76,16 @@ class PlexilPlanTranslator():
 
 
     # [Section: PLEXIL Code Generation]
-    def generate_code(self, scenario, plan_info, faults):
+    def generate_code(self, scenario, plan_info):
         code = ""
         if scenario == Scenario.EXCAVATION:
-            code = self.gen_exca_scenario(plan_info, faults)
+            code = self.gen_exca_scenario(plan_info)
         else:
             loginfo("[Plan Translation] Unknown scenario: " + scenario_ID)
         return code
 
     # Excavation
-    def gen_exca_scenario(self, plan_info, faults):
+    def gen_exca_scenario(self, plan_info):
         node_name = plan_info["node_name"]
         sel_xloc = plan_info["sel_xloc"]
         sel_dloc = plan_info["sel_dloc"]
@@ -98,10 +98,6 @@ class PlexilPlanTranslator():
 
         plan_status_varname = "planSuccess"
 
-        faulty_ex_prob = -1
-        if len(faults) != 0:
-            faulty_ex_prob = faults['excavation']['ex_prob']
-
         loginfo("Generating the PLEXIL code for excavation scenario...")
         code = ""
         code += self.gen_plan_desc()
@@ -113,13 +109,6 @@ class PlexilPlanTranslator():
         code += "\tBoolean " + plan_status_varname + ";\n\n"
 
         code += self.gen_plan_info(1, plan_info)
-
-        # Simulate the fault introduced into the excavatability
-        if (faulty_ex_prob >=0 ) and (faulty_ex_prob <= 1):
-            msg = "[Fault Injection] A fault has been introduced to the lander system that causes the excavatability, the probability of successful excavation, to drop."
-            msg += " The excavatability drops from " + str(xloc_ep) + " to " + str(xloc_ep*faulty_ex_prob) + "."
-            code += self.gen_info(1, msg=msg)
-            xloc_ep = xloc_ep * faulty_ex_prob
 
         code += self.gen_unstow(1)
         code += self.gen_guarded_move(1, xloc_x, xloc_y)

@@ -21,6 +21,7 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <cstdlib>
 
 class Task {
   public:
@@ -57,10 +58,38 @@ class MissionController {
     std::vector<std::string> task_names_list;
     std::map<std::string, std::string> mission_spec; // a dictionary of tasks
     void load_mission_spec(std::string mission_spec_fp); // load from a file    
-    void send_first_task();
+    void prepare_task_to_run();
     void report_mission_result();
+    bool prepare_evaluation_task_dir();
 };
 
+bool MissionController::prepare_evaluation_task_dir(std::string task_name)
+{
+  char *eval_root_dir = getenv("EVALUATION_ROOT_DIR");
+  if(eval_root_dir == NULL) {
+    ROS_ERROR("Environment variable $PLEXIL_PLAN_DIR is not set.");
+    return false;
+  }
+
+  // Create a directory for organizing the evaluation result for the task, task_name
+  if (task_name.find("Evaluation")!=std::string::nops)
+  {
+    std::string eval_task_dir;
+    eval_task_dir = = str(eval_root_dir) + "/Tasks/" + task_name;
+    std::string command;
+    command = "mkdir -p "+ eval_task_dir;  
+    system(command.c_str());
+    result = true;
+  }
+  else
+  {
+    ROS_INFO("[Mission Control Node] Unsupported task: " << task_name << ". Can't prepare planing tuility files for it");
+    result = false;
+  }
+
+  return result;
+
+}
 void MissionController::report_mission_result()
 {
   ROS_INFO("[Mission Control Node] Mission Result");
@@ -99,23 +128,34 @@ void MissionController::load_mission_spec(std::string mission_spec_fp)
   }
 }
 
-void MissionController::send_first_task()
+void MissionController::prepare_task_to_run()
 {
-  current_task_idx += 1; // it becomes 0
+  current_task_idx += 1;
   std::string task_name = task_names_list[current_task_idx];
   std::string aux_info = mission_spec[task_name];
   std::string status = "Created";
-  current_task = Task(task_name, status, aux_info);
 
-  // Create a NextTask message and send it to the analysis componenet
-  rs_autonomy::NextTask new_task;
-  new_task.name = task_name;
-  new_task.aux_info = aux_info;
-  new_task.model_names = model_names;
-  new_task.terminate_current_task = false;
-  new_task_pub.publish(new_task);
-  current_task.status = "Sent";
+
+  bool is_successful = prepare_evaluation_task_dir(task_name);
+ 
+  if (is_successful)
+  {
+    current_task = Task(task_name, status, aux_info);
+    // Create a NextTask message and send it to the analysis componenet
+    rs_autonomy::NextTask new_task;
+    new_task.name = task_name;
+    new_task.aux_info = aux_info;
+    new_task.model_names = model_names;
+    new_task.terminate_current_task = false;
+    new_task_pub.publish(new_task);
+    current_task.status = "Sent";
+  }
+  else
+  {
+    ROS_ERROR("[Mission Control Node] failed to prepare to do the task " + task_name.);
+  }
 }
+
 void MissionController::callback_current_task_status(const rs_autonomy::CurrentTask msg)
 {
   ROS_INFO_STREAM("[Mission Control Node] current task: " << msg.name << ", status: " << msg.status);
@@ -129,8 +169,7 @@ void MissionController::callback_current_task_status(const rs_autonomy::CurrentT
 		  || msg.status == "Completed_Failure"
 		  || msg.status == "Terminated")
   {
-   current_task_idx += 1;
-   if (current_task_idx == task_names_list.size())
+   if ((current_task_idx+1) == task_names_list.size())
    {
      ROS_INFO("[Mission Control Node] All tasks have been run.");
      report_mission_result();
@@ -138,20 +177,7 @@ void MissionController::callback_current_task_status(const rs_autonomy::CurrentT
    else
    {
     past_task_list.push_back(current_task);
-
-    std::string task_name = task_names_list[current_task_idx];
-    std::string aux_info = mission_spec[task_name];
-    std::string status = "Created";
-    current_task = Task(task_name, status, aux_info);
-
-    // Create a NextTask message and send it to the analysis componenet
-    rs_autonomy::NextTask new_task;
-    new_task.name = task_name;
-    new_task.aux_info = aux_info;
-    new_task.model_names = model_names;
-    new_task.terminate_current_task = false;
-    new_task_pub.publish(new_task);
-    current_task.status = "Sent";
+    prepare_task_to_run();
    }
   }
 
@@ -196,11 +222,11 @@ class MissionController {
 
 int main(int argc, char* argv[])
 {
-  std::string mission_spec_fp = ""; 
+  std::string mission_spec_fp = "None"; 
 
-  if (argc ==2 )
+  if (argc==2 && std::string(argv[1]).compare("None") != 0)
   {
-    mission_spec_fp = argv[1];
+    mission_spec_fp = std::string(argv[1]);
   }
   else
   {
@@ -208,10 +234,9 @@ int main(int argc, char* argv[])
     return 1;
   }
 
+  // Initialization
   ros::init(argc, argv, "autonomy_node");
-
   ros::NodeHandle nh;
-
   MissionController mission_controller;
   mission_controller.new_task_pub = nh.advertise<rs_autonomy::NextTask>(
 		  "/Mission/NextTask", msg_queue_size)
@@ -220,6 +245,10 @@ int main(int argc, char* argv[])
 		  msg_queue_size,
 		  &MissionController::callback_current_task_status,
 		  &mission_controller);
+
+  // Load the mission specification and start to run the first task
+  mission_controller.load_mission_spec(mission_spec_fp);
+  mission_controller.prepare_task_to_run();
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {

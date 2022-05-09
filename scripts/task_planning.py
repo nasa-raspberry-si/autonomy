@@ -55,6 +55,7 @@ class TaskPlanner:
         #   by the analysis componenet. Check the dict, utility_filenames_by_tasks. 
         loginfo("[Task Planning - Step 1] Information Preparation")
         task_dir = evaluation_root_dir + "/Tasks/" + task_name
+        task_planning_resources_dir = evaluation_root_dir + "/Task_Planning_Resources/"
         current_plan_dir = task_dir + "/" + plan_name 
         try:
             os.mkdir(current_plan_dir)
@@ -80,10 +81,15 @@ class TaskPlanner:
         # * FIXME: for other task, the handling of runtime info may be different
         num_xlocs = len(runtime_info['xloc_list'])
         num_dlocs = len(runtime_info['dloc_list'])
-        prism_model_fp = "exca_"+str(num_xlocs)+"xlocs_"+str(num_dlocs)+"dlocs.prism"
+        prism_model_fp = current_plan_dir + "/exca_"+str(num_xlocs)+"xlocs_"+str(num_dlocs)+"dlocs.prism"
 
-        prismpp_sh_fp = task_dir + "/" + self.utility_filenames_by_tasks['pp_sh']
-        prism_preprocessor_fp = task_dir + "/" + self.utility_filenames_by_tasks['preprocessor']
+        prism_planning_utility_dir = ""
+        if "Excavation" in task_name:
+            prism_planing_utility_dir = task_planning_resources_dir + "/Excavation"
+        else:
+            loginfo("[Task Planning - Step 2] Error: unknown task: " + task_name)
+        prismpp_sh_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks['pp_sh']
+        prism_preprocessor_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks['preprocessor']
         prism_model_fp = current_plan_dir + "/" + prism_model_filename
         
         # * Generating the Prism model.
@@ -98,7 +104,7 @@ class TaskPlanner:
         # Step 3
         # * Use PRISM model to extract policy
         loginfo("[Task Planning - Step 3]: Use PRISM model to extract the policy")
-        prism_property_fp = task_dir + "/" + self.utility_filenames_by_tasks['property']
+        prism_property_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks['property']
         policy_filename = "policy.adv"
         policy_fp = os.path.join(current_plan_dir, policy_filename)
 
@@ -113,7 +119,7 @@ class TaskPlanner:
         loginfo("[Task Planning - Step 4]: Use the policy to generate the high-level plan")
 
         # * The ending ':' indicates the end of the list of java class paths
-        java_class_path_of_PrismPolicy = task_dir + ":"
+        java_class_path_of_PrismPolicy = prism_planing_utility_dir + ":"
         cmd_syn_plan = "java " + \
                 "-cp " + java_class_path_of_PrismPolicy + " " + \
                 self.utility_filenames_by_tasks['policy_extract'] + " " + \

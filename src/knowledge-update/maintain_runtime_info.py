@@ -9,7 +9,7 @@ Create runtime information for excavation as follows:
 '''
 
 from rospy import loginfo
-from knowledge_maintenance_tool.update_models import ModelUpdater
+from knowledge-update.maintain_models import ModelUpdater
 
 import random
 import json

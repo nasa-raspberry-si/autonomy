@@ -10,9 +10,9 @@ from rospy import loginfo
 from rs_autonomy.srv import RTInfoMaintenanceInstruction, RTInfoMaintenanceInstructionResponse
 from rs_autonomy.srv import ModelUpdateInstruction, ModelUpdateInstructionResponse
 
-# knowledge_maintenance_tool package
-from knowledge_update.maintain_runtime_info import RuntimeInfoMaintenance
-from knowledge_update.maintain_models import ModelUpdater
+# knowledge-update package
+from knowledge-update.maintain_runtime_info import RuntimeInfoMaintenance
+from knowledge-update.maintain_models import ModelUpdater
 
 
 # Environment Variables

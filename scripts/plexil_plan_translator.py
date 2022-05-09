@@ -46,7 +46,6 @@ class PlanTranslation:
         # * Call PLEXIL plan translation utility
         loginfo("[Plan Translation - Step 2] High-level plan parsing and PLEXIL plan writeup.")
         plexil_plan_translator = PlexilPlanTranslator()
-        plexil_plan_dir = result_dir
         plexil_plan_translator.translate(
                 task_name,
                 runtime_info,

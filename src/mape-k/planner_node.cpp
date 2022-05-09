@@ -74,7 +74,7 @@ void AdaptationInstructionListener::callback_adap_inst_sub(const rs_autonomy::Ad
 	task_name = adpt_inst.task_name;
         current_plan_id = 1; // frist plan for the new task
       }
-      current_plan_name = task_name + std::to_string(current_plan_id);
+      current_plan_name = task_name + "Plan" + std::to_string(current_plan_id);
 
       if (task_planning_service_client.call(task_planning))
       {
