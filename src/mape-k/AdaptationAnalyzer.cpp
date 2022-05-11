@@ -1,13 +1,23 @@
 #include "AdaptationAnalyzer.h"
+#include <rs_autonomy/CurrentTask.h> // send it to the mission control componenet
+
 
 void AdaptationAnalyzer::callback_current_plan(const ow_plexil::CurrentPlan current_plan)
 {
   ROS_INFO_STREAM("[Analysis Node] the current plan, " << current_plan.plan_name << ", status: " << current_plan.plan_status);
   plan_name = current_plan.plan_name;
   plan_status = current_plan.plan_status;
-  // for excavation scenario, the aux_info is a string with a format of 
-  // "excavation_loc_ID,dump_loc_ID"
-  plan_aux_info = current_plan.aux_info;
+}
+
+void AdaptationAnalyzer::callback_high_level_plan(const rs_autonomy::HighLevelPlan msg)
+{
+  ROS_INFO_STREAM("[Analysis Node] the synthesized high-level plan, " << msg.plan);
+  // For excavation scenario:
+  //   - The high-level plan for excavation scenario has the format as
+  //     "[excavation_loc_ID,dump_loc_ID]"
+  //   - the aux_info is a string with a format of 
+  //     "excavation_loc_ID,dump_loc_ID"
+  plan_aux_info = msg.plan.substr(1, msg.plan.length()-2);
 }
 
 void AdaptationAnalyzer::callback_next_task(const rs_autonomy::NextTask next_task)
@@ -16,7 +26,7 @@ void AdaptationAnalyzer::callback_next_task(const rs_autonomy::NextTask next_tas
   terminate_current_task = next_task.terminate_current_task;
   next_task_name = next_task.name;
   next_task_aux_info = next_task.aux_info;
-  model_names = next_task.model_names;
+  next_task_model_names = next_task.model_names;
   has_new_task = true;
 }
 
@@ -27,9 +37,9 @@ void AdaptationAnalyzer::callback_arm_fault_status(const rs_autonomy::ArmFault a
   update_local_vars();
 }
 
-void AdaptationAnalyzer::callback_current_operation(const ow_plexil::CurrentOperation.h current_op)
+void AdaptationAnalyzer::callback_current_operation(const ow_plexil::CurrentOperation current_op)
 {
-  ROS_INFO_STREAM("[Analysis Node] the current operation " << current_op.op_name << ", status: " << current_op.op_status);
+  ROS_INFO("[Analysis Node] the current operation %s, status: %s", current_op.op_name.c_str(), current_op.op_status.c_str());
   current_op_name = current_op.op_name;
   current_op_status = current_op.op_status;
   update_local_vars();
@@ -37,10 +47,10 @@ void AdaptationAnalyzer::callback_current_operation(const ow_plexil::CurrentOper
 
 void AdaptationAnalyzer::callback_vibration_level_changed(const rs_autonomy::VibrationLevel vl)
 {
-  ROS_INFO_STREAM("[Analysis Node] the vibration level is changed from level " << vibration_level << " to level " << v_level);
+  ROS_INFO("[Analysis Node] the vibration level is changed from level %d to level %d.", vibration_level, vl.level);
   vibration_level = vl.level;
   wait_for_quake_off = !wait_for_quake_off;
-
+}
 
 void AdaptationAnalyzer::callback_earth_inst(const rs_autonomy::EarthInstruction earth_inst)
 {
@@ -52,14 +62,15 @@ void AdaptationAnalyzer::callback_earth_inst(const rs_autonomy::EarthInstruction
   }
   else
   {
-    ROS_INFO_STREAM("[Analysis Node] receive an instruction from the Earth to run a new plan, but the plan name is empty.";
+    ROS_INFO_STREAM("[Analysis Node] receive an instruction from the Earth to run a new plan, but the plan name is empty.");
   }
 }
 
 // FIXME:
 // This is to assist the simulation of excavation failure.
 // It should be replaced when a more realistic simulation is available
-void AdaptationAnalyzer::update_local_vars(){
+void AdaptationAnalyzer::update_local_vars()
+{
   if (has_arm_fault)
   {
     if (current_op_name == "Digging" && current_op_status == "starts")
@@ -74,8 +85,8 @@ void AdaptationAnalyzer::update_local_vars(){
 // Currently supported models: "SciVal", "ExcaProb"
 void AdaptationAnalyzer::update_models(std::vector<std::string> model_names)
 {
-  model_update_inst.task_name = task_name;
-  model_update_inst.model_names = model_names;
+  model_update_inst.request.task_name = current_task_name;
+  model_update_inst.request.model_names = model_names;
 
   if(model_update_service_client.call(model_update_inst))
   {
@@ -95,9 +106,9 @@ void AdaptationAnalyzer::update_models(std::vector<std::string> model_names)
 // "Remove"        "item1_ID", ...
 void AdaptationAnalyzer::maintain_rtInfo(std::string action, std::string aux_info)
 {
-  rtInfo_maintenance_inst.task_name = current_task_name;
-  rtInfo_maintenance_inst.action = action;
-  rtInfo_maintenance_inst.aux_info = aux_info;
+  rtInfo_maintenance_inst.request.task_name = current_task_name;
+  rtInfo_maintenance_inst.request.action = action;
+  rtInfo_maintenance_inst.request.aux_info = aux_info;
   if(rtInfo_maintenence_service_client.call(rtInfo_maintenance_inst))
   {
     ROS_INFO("The Runtime Info Update is performed.");
@@ -123,21 +134,21 @@ void AdaptationAnalyzer::update_task_control_vars()
 
   current_task_status = "Ready"; // reset it to "Ready", indicating the task is not starting yet.
 
-  CurrentTask current_task_msg;
+  rs_autonomy::CurrentTask current_task_msg;
   current_task_msg.name = current_task_name;
   current_task_msg.status = current_task_status;
   current_task_status_pub.publish(current_task_msg);
 }
 
-void MonitorListener::initialize_rtInfo()
+void AdaptationAnalyzer::initialize_rtInfo()
 {
-  update_models(current_task_model_names)
-  action = "Initialize";
+  update_models(current_task_model_names);
+  std::string action = "Initialize";
   maintain_rtInfo(action, current_task_aux_info);
 }
 
 // Transition the lander to a safey pose (Unstow pose) with arm fault cleared
-void MonitorListener::transition_to_safe_pose()
+void AdaptationAnalyzer::transition_to_safe_pose()
 {
   adpt_inst.adaptation_commands = { "TerminatePlan", "Unstow"};
   if (has_arm_fault)
@@ -149,7 +160,7 @@ void MonitorListener::transition_to_safe_pose()
   adpt_inst_pub.publish(adpt_inst);
 }
 
-void MonitorListener::planning()
+void AdaptationAnalyzer::planning()
 {
   adpt_inst.task_name = current_task_name;
   adpt_inst.adaptation_commands = { "Planning"};
@@ -157,7 +168,7 @@ void MonitorListener::planning()
 }
 
 // Update models and prepare the initial runtime info for the current task
-void MonitorListener::initialize_task(bool syn_plan=true, bool terminate_current_task=false)
+void AdaptationAnalyzer::initialize_task(bool syn_plan, bool terminate_current_task)
 {
   // if the current task has been started, there should a plan is running for it,
   // so terminate the plan and transition the lander to the safe pose, Unstow pose.
@@ -166,7 +177,7 @@ void MonitorListener::initialize_task(bool syn_plan=true, bool terminate_current
     transition_to_safe_pose();
     if(terminate_current_task)
     {
-      CurrentTask current_task_msg;
+      rs_autonomy::CurrentTask current_task_msg;
       current_task_msg.name = current_task_name;
       current_task_msg.status = "Terminated";
       current_task_status_pub.publish(current_task_msg);
@@ -190,7 +201,7 @@ void MonitorListener::initialize_task(bool syn_plan=true, bool terminate_current
       if(current_task_status == "Ready")
       {
         current_task_status = "Started";
-	CurrentTask current_task_msg;
+	rs_autonomy::CurrentTask current_task_msg;
 	current_task_msg.name = current_task_name;
 	current_task_msg.status = current_task_status;
         current_task_status_pub.publish(current_task_msg);
@@ -201,15 +212,15 @@ void MonitorListener::initialize_task(bool syn_plan=true, bool terminate_current
 
 void AdaptationAnalyzer::adaptation_analysis()
 {
-    bool has_arm_fault = false;
-    std::string current_op_name = "":
-    std::string current_op_status = "";
-    int vibration_level = 0;
-    std::string manual_planname = ""; 
-    bool has_manual_plan = false;
-    bool wait_for_quake_off = false;
-    int num_digging_failures = 0;
-    bool current_digging_failed = false;
+  bool has_arm_fault = false;
+  std::string current_op_name = "";
+  std::string current_op_status = "";
+  int vibration_level = 0;
+  std::string manual_planname = ""; 
+  bool has_manual_plan = false;
+  bool wait_for_quake_off = false;
+  int num_digging_failures = 0;
+  bool current_digging_failed = false;
 
   // Determine which adaptation should be triggered
   if (has_manual_plan && manual_planname != "") // A manual plan from the Earth
@@ -225,7 +236,8 @@ void AdaptationAnalyzer::adaptation_analysis()
     adpt_inst.adaptation_commands = { manual_planname };
     adpt_inst_pub.publish(adpt_inst);
   }
-  else if (!wait_for_quake_off) { // The lander is in active mode
+  else if (!wait_for_quake_off) // The lander is in active mode
+  {
     if (vibration_level == 1) // An earthquake is detected. 
     {
       // Transition the lander to a safe mode
@@ -249,10 +261,10 @@ void AdaptationAnalyzer::adaptation_analysis()
       transition_to_safe_pose();
 
       // Update Excavation-Probability Model and Runtime Info
-      std::vector<std::string> model_names = {"ExcaProb";}
+      std::vector<std::string> model_names = {"ExcaProb"};
       update_models(model_names);
       std::string action = "Update";
-      std::string axu_info = "ExcaProb";
+      std::string aux_info = "ExcaProb";
       maintain_rtInfo(action, aux_info);
 
       planning();

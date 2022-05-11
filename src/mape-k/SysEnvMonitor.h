@@ -1,3 +1,7 @@
+#ifndef SysEnvMonitor_H 
+#define SysEnvMonitor_H
+
+
 // ROS
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -15,7 +19,7 @@
 
 //Others
 #include "message_passing_support.h" // for msg_queue_size
-
+int msg_queue_size = 50;
 
 class SysEnvMonitor {
   public:
@@ -28,28 +32,28 @@ class SysEnvMonitor {
 		  "/Monitor/CurrentOperation", msg_queue_size);
       vibration_level_changed_pub = nh->advertise<rs_autonomy::VibrationLevel>(
 		  "/Monitor/VibrationLevelChanged", msg_queue_size);
-      arm_fault_changed_pub = nh->advertise<ow_>(
+      arm_fault_changed_pub = nh->advertise<rs_autonomy::ArmFault>(
 		  "/Monitor/ArmFaultStatus", msg_queue_size);
 
       // Initialize subscribers and bind callbacks
       // The messages from /faults/arm_faults_status and /Env/VibrationLevel
       // may be relatively fast, so set a large size of queue.
-      arm_fault_sub = nh.subscribe<ow_faults::ArmFaults>(
+      arm_fault_sub = nh->subscribe<ow_faults::ArmFaults>(
 		      "/faults/arm_faults_status",
     		      100,
 		      &SysEnvMonitor::callback_arm_fault_status,
 		      this);
-      vibration_level_sub = nh.subscribe<rs_autonomy::VibrationLevel>(
+      vibration_level_sub = nh->subscribe<rs_autonomy::VibrationLevel>(
     		      "/Env/VibrationLevel",
 		      100,
 		      &SysEnvMonitor::callback_vibration_level,
 		      this);
-      current_op_sub = nh.subscribe<ow_plexil::CurrentOperation>(
+      current_op_sub = nh->subscribe<ow_plexil::CurrentOperation>(
     		      "/CurrentOperation",
     		      msg_queue_size,
     		      &SysEnvMonitor::callback_current_op,
     		      this);
-      current_plan_sub = nh.subscribe<ow_plexil::CurrentPlan>(
+      current_plan_sub = nh->subscribe<ow_plexil::CurrentPlan>(
     		      "/current_plan_status",
     		      msg_queue_size,
     		      &SysEnvMonitor::callback_current_plan,
@@ -62,6 +66,7 @@ class SysEnvMonitor {
     ros::Publisher current_op_pub;
     ros::Publisher vibration_level_pub;
     ros::Publisher arm_fault_changed_pub;
+    ros::Publisher vibration_level_changed_pub;
 
     // callbacks
     void callback_current_plan(const ow_plexil::CurrentPlan current_plan);
@@ -85,3 +90,6 @@ class SysEnvMonitor {
     ros::Subscriber current_op_sub;
     ros::Subscriber current_plan_sub;
 };
+
+
+#endif

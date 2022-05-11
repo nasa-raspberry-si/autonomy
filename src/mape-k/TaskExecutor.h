@@ -1,3 +1,8 @@
+#ifndef TaskExecutor_H
+#define TaskExecutor_H
+
+
+
 // The role of Execute node:
 // * Wait for instruction from the planner node
 // * Pull info from the knowledge node when needed
@@ -28,10 +33,10 @@ class TaskExecutor {
       fault_management_service_client = nh->serviceClient<rs_autonomy::ArmFaultConfig>("/arm_fault_management");
       plan_translation_service_client = nh->serviceClient<rs_autonomy::PlanTranslation>("/plan_translation");
       // callbacks for subscribers
-      plan_inst_sub = nh.subscribe<rs_autonomy::PlannerInstruction>(
-    		      "/PlannerInstruction",
+      plan_inst_sub = nh->subscribe<rs_autonomy::PlannerInstruction>(
+    		      "/Planner/PlannerInstruction",
     		      msg_queue_size,
-    		      &TaskExecutor::callback,
+    		      &TaskExecutor::callback_planner_inst,
     		      this);
     }
 
@@ -42,10 +47,13 @@ class TaskExecutor {
     ow_plexil::PlanSelection execute_instruction;
     ros::ServiceClient plan_selection_service_client;
 
-    ArmFaultConfig clear_arm_faults = create_fault_clear_msg();
-    ros::Serviceclient fault_management_service_client;
+    rs_autonomy::ArmFaultConfig clear_arm_faults = create_fault_clear_req();
+    rs_autonomy::ArmFaultConfig create_fault_clear_req();
+    ros::ServiceClient fault_management_service_client;
 
-    void callback(const rs_autonomy::PlannerInstruction planner_instruction);
+    void callback_planner_inst(const rs_autonomy::PlannerInstruction planner_instruction);
   private:
     ros::Subscriber plan_inst_sub;
 };
+
+#endif

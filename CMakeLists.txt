@@ -31,11 +31,12 @@ add_message_files(
   VibrationLevel.msg
   EarthInstruction.msg
   ArmFault.msg
+  HighLevelPlan.msg
 )
 
 add_service_files(
   FILES
-  RTInfoMaitenanceInstruction.srv  # maintain runtime info
+  RTInfoMaintenanceInstruction.srv  # maintain runtime info
   ModelUpdateInstruction.srv
   ArmFaultConfig.srv
   TaskPlanning.srv

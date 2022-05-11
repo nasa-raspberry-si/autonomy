@@ -1,3 +1,8 @@
+#ifndef AdaptationAnalyzer_H
+#define AdaptationAnalyzer_H
+
+
+
 // Role of The Analysis Component
 // * Pull information from Monitor componenet
 // * Send requests to Knowledge component to update models and maintain runtime info
@@ -27,9 +32,11 @@
 #include <ow_plexil/CurrentOperation.h>
 #include <ow_plexil/CurrentPlan.h>
 
+// published by the planner componenet
+#include <rs_autonomy/HighLevelPlan.h>
+
 //Others
 #include "message_passing_support.h" // for msg_queue_size
-
 
 
 // Currently, the adaptation_analysis implements seven cases in excavation scenario
@@ -43,7 +50,7 @@ class AdaptationAnalyzer {
     {
       // Publisher for sending adaptation commands to the planner component
       adpt_inst_pub = nh->advertise<rs_autonomy::AdaptationInstruction>(
- 		      "/AdaptationInstruction", msg_queue_size);
+ 		      "/Analysis/AdaptationInstruction", msg_queue_size);
       current_task_status_pub = nh->advertise<rs_autonomy::CurrentTask>(
 		      "/Analysis/CurrentTask", msg_queue_size);
 
@@ -78,6 +85,11 @@ class AdaptationAnalyzer {
     		      msg_queue_size,
     		      &AdaptationAnalyzer::callback_earth_inst,
     		      this);
+      high_level_plan_sub = nh->subscribe<rs_autonomy::HighLevelPlan>(
+    		      "/Planner/HighLevelPlan",
+    		      msg_queue_size,
+    		      &AdaptationAnalyzer::callback_high_level_plan,
+    		      this);
       
       // ROS clients for update models and runtime information
       rtInfo_maintenence_service_client = nh->serviceClient<rs_autonomy::RTInfoMaintenanceInstruction>("//runtime_info_maintenance");
@@ -95,11 +107,11 @@ class AdaptationAnalyzer {
     bool terminate_current_task = false;
     std::string next_task_name = "";
     std::string next_task_aux_info = "";
-    std::vector<std::string> model_names; // models used for the task
+    std::vector<std::string> next_task_model_names; // models used for the task
     //// ArmFault
     bool has_arm_fault = false;
     //// CurrentOperation
-    std::string current_op_name = "":
+    std::string current_op_name = "";
     std::string current_op_status = "";
     //// Vibration caused by earthquake
     int vibration_level = 0;
@@ -118,6 +130,7 @@ class AdaptationAnalyzer {
     bool has_new_task = false;
     std::string current_task_name = "";
     std::string current_task_aux_info = "";
+    std::vector<std::string> current_task_model_names;
     //// TBD (3 status): "started", "completed", "terminated" 
     std::string current_task_status = "";
 
@@ -146,6 +159,7 @@ class AdaptationAnalyzer {
     void callback_arm_fault_status(const rs_autonomy::ArmFault arm_fault);
     void callback_vibration_level_changed(const rs_autonomy::VibrationLevel vl);
     void callback_earth_inst(const rs_autonomy::EarthInstruction earth_inst);
+    void callback_high_level_plan(const rs_autonomy::HighLevelPlan msg);
 
     // ROS clients for update models and runtime information
     rs_autonomy::ModelUpdateInstruction model_update_inst;
@@ -163,5 +177,8 @@ class AdaptationAnalyzer {
     ros::Subscriber current_operation_sub;
     ros::Subscriber vibration_level_sub;
     ros::Subscriber earth_inst_sub;
- 
+    ros::Subscriber high_level_plan_sub; 
 };
+
+
+#endif

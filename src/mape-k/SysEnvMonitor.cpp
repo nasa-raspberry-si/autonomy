@@ -17,7 +17,7 @@ void SysEnvMonitor::callback_current_plan(const ow_plexil::CurrentPlan current_p
 
 void SysEnvMonitor::callback_current_op(const ow_plexil::CurrentOperation current_op)
 {
-  current_plan_op.publish(current_op);
+  current_plan_pub.publish(current_op);
 }
 
 void SysEnvMonitor::callback_vibration_level(const rs_autonomy::VibrationLevel vl)

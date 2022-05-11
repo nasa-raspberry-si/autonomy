@@ -29,7 +29,7 @@ int main(int argc, char* argv[])
   MissionController mission_controller(&nh);
   // Load the mission specification and start to run the first task
   mission_controller.load_mission_spec(mission_spec_fp);
-  mission_controller.prepare_task_to_run();
+  mission_controller.prepare_new_task_to_run();
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {

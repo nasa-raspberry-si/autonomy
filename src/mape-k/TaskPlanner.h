@@ -1,3 +1,7 @@
+#ifndef TaskPlanner_H
+#define TaskPlanner_H
+
+
 // ROS
 #include <ros/ros.h>
 #include <ros/package.h>
@@ -6,6 +10,7 @@
 #include <rs_autonomy/AdaptationInstruction.h>
 #include <rs_autonomy/PlannerInstruction.h>
 #include <rs_autonomy/TaskPlanning.h>
+#include <rs_autonomy/HighLevelPlan.h>
 
 //Others
 #include "message_passing_support.h" // for msg_queue_size
@@ -16,11 +21,14 @@ class TaskPlanner {
   public:
     TaskPlanner(ros::NodeHandle *nh)
     {
-      planner_inst_pub =  nh->advertise<rs_autonomy::PlannerInstruction>(
-		      "/PlannerInstruction",
+      planner_inst_pub = nh->advertise<rs_autonomy::PlannerInstruction>(
+		      "/Planner/PlannerInstruction",
+		      msg_queue_size);
+      high_level_plan_pub = nh->advertise<rs_autonomy::HighLevelPlan>(
+		      "/Planner/HighLevelPlan",
 		      msg_queue_size);
       adap_inst_sub = nh->subscribe<rs_autonomy::AdaptationInstruction>(
-		      "/AdaptationInstruction",
+		      "/Analysis/AdaptationInstruction",
 		      msg_queue_size,
 		      &TaskPlanner::callback_adap_inst_sub,
 		      this);
@@ -29,6 +37,7 @@ class TaskPlanner {
 
     // publisher
     ros::Publisher planner_inst_pub;
+    ros::Publisher high_level_plan_pub;
     rs_autonomy::PlannerInstruction planner_instruction;
 
     // callback for subscriber
@@ -49,3 +58,5 @@ class TaskPlanner {
     ros::Subscriber adap_inst_sub;
 };
 
+
+#endif

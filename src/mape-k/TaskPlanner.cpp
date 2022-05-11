@@ -20,7 +20,7 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
     else if (command == "Unstow") // send a PLEXIL plan for unstowing the arm
     {
       planner_instruction.command = "ADD";
-      planner_instruction.plan_name = Unstow;
+      planner_instruction.plan_name = "Unstow";
       planner_instruction.aux_info = "";
     }
     else if (command.find("ManualPlan") != std::string::npos)
@@ -49,11 +49,14 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
         planner_instruction.command = "ADD";
         planner_instruction.plan_name = current_plan_name;
         planner_instruction.aux_info = task_planning.response.high_level_plan;
+	rs_autonomy::HighLevelPlan hlp_msg;
+	hlp_msg.plan = task_planning.response.high_level_plan;
+	high_level_plan_pub.publish(hlp_msg);
       }
       else
       {
         // FIXME: notify the failure to the analysis componenet
-	ROS_ERROR("[Planner Node] unable to talk to /task_planning service. Planning fails.")
+	ROS_ERROR("[Planner Node] unable to talk to /task_planning service. Planning fails.");
       }
     }
     else
@@ -72,7 +75,7 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
         << "\n\tcommand: " << this->planner_instruction.command
         << "\n\tplan_name:" << this->planner_instruction.plan_name
         << "\n\taux_info: " << this->planner_instruction.aux_info
-      )
+      );
     }
   }
   

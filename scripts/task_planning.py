@@ -128,6 +128,7 @@ class TaskPlanner:
         p_sp = Popen(cmd_syn_plan, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p_sp.communicate()
         # high-level plan looks like: "[action1, action2, ...]"
+        # the name of each action is prefixed by "select_"
         high_level_plan = stdout.splitlines()[-1]
         loginfo("high-level plan: " + str(high_level_plan))
         high_level_plan_fp = current_plan_dir + "/high_level_plan.txt"

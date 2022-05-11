@@ -2,17 +2,18 @@
 
 bool MissionController::prepare_evaluation_task_dir(std::string task_name)
 {
+  bool result = false;
   char *eval_root_dir = getenv("EVALUATION_ROOT_DIR");
   if(eval_root_dir == NULL) {
     ROS_ERROR("Environment variable $PLEXIL_PLAN_DIR is not set.");
-    return false;
+    return result;
   }
 
   // Create a directory for organizing the evaluation result for the task, task_name
-  if (task_name.find("Evaluation")!=std::string::nops)
+  if (task_name.find("Evaluation")!=std::string::npos)
   {
     std::string eval_task_dir;
-    eval_task_dir = = str(eval_root_dir) + "/Tasks/" + task_name;
+    eval_task_dir = std::string(eval_root_dir) + "/Tasks/" + task_name;
     std::string command;
     command = "mkdir -p "+ eval_task_dir;  
     system(command.c_str());
@@ -20,7 +21,7 @@ bool MissionController::prepare_evaluation_task_dir(std::string task_name)
   }
   else
   {
-    ROS_INFO("[Mission Control Node] Unsupported task: " << task_name << ". Can't prepare planing tuility files for it");
+    ROS_INFO("[Mission Control Node] Unsupported task: %s. Can't prepare planing tuility files for it", task_name.c_str());
     result = false;
   }
 
@@ -32,7 +33,8 @@ void MissionController::report_mission_result()
   ROS_INFO("[Mission Control Node] Mission Result");
   for(auto task : past_task_list)
   {
-    ROS_INFO_STREAM("Task: "<<task.name<<", Status: "<<task.status<<"Aux_Info: "<<task.aux_info);
+    ROS_INFO("Task: %s, Status: %s, Aux_Info: %s.",
+		    task.name.c_str(), task.status.c_str(), task.aux_info.c_str());
   }
 }
 
@@ -51,7 +53,7 @@ void MissionController::load_mission_spec(std::string mission_spec_fp)
 
   std::string line;
  
-  ROS_INFO_STEAM("[Mission Control Node] Loading mission specification: " << mission_spec_fp);
+  ROS_INFO("[Mission Control Node] Loading mission specification: %s", mission_spec_fp.c_str());
 
   while (std::getline(infile, line))
   {
@@ -59,13 +61,13 @@ void MissionController::load_mission_spec(std::string mission_spec_fp)
     std::size_t pos = line.find(delimiter); // pos is 0-based index
     std::string task_name = line.substr(5, pos-5); // "Task:" has a length of 5
     std::string task_aux_info = line.substr(pos+10); // "Aux_Info:" has a length of 9
-    task_name_list.push_back(task_name);
+    task_names_list.push_back(task_name);
     mission_spec.insert( std::pair<std::string,std::string>(task_name, task_aux_info) ); 
-    ROS_INFO_STEAM("\ttask: " << task_name << "aux_info: " << task_aux_info);
+    ROS_INFO("\ttask: %s, aux_info: %s", task_name.c_str(), task_aux_info.c_str());
   }
 }
 
-void MissionController::prepare_task_to_run()
+void MissionController::prepare_new_task_to_run()
 {
   current_task_idx += 1;
   std::string task_name = task_names_list[current_task_idx];
@@ -89,7 +91,7 @@ void MissionController::prepare_task_to_run()
   }
   else
   {
-    ROS_ERROR("[Mission Control Node] failed to prepare to do the task " + task_name.);
+    ROS_ERROR_STREAM("[Mission Control Node] failed to prepare to do the task " << task_name);
   }
 }
 
@@ -106,19 +108,17 @@ void MissionController::callback_current_task_status(const rs_autonomy::CurrentT
 		  || msg.status == "Completed_Failure"
 		  || msg.status == "Terminated")
   {
-   if ((current_task_idx+1) == task_names_list.size())
-   {
-     ROS_INFO("[Mission Control Node] All tasks have been run.");
-     report_mission_result();
-   }
-   else
-   {
-    past_task_list.push_back(current_task);
-    prepare_task_to_run();
-   }
+    if ((current_task_idx+1) == task_names_list.size())
+    {
+      ROS_INFO("[Mission Control Node] All tasks have been run.");
+      report_mission_result();
+     }
+    else
+    {
+     past_task_list.push_back(current_task);
+     prepare_new_task_to_run();
+    }
   }
 
-
-  this->pub.publish(this->current_task);
 }
 

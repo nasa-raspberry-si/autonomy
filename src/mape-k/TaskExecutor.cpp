@@ -1,15 +1,17 @@
 #include "TaskExecutor.h"
 
-ArmFaultConfig TaskExecutor::create_fault_clear_msg()
+#include <rs_autonomy/ArmFaultConfig.h>
+
+rs_autonomy::ArmFaultConfig TaskExecutor::create_fault_clear_req()
 {
-  ArmFaultconfig msg;
-  msg.action = "Clear";
-  msg.arm_fault_var_ids = { 1, 2, 3, 4, 5, 6 };
-  msg.values = {false, false, false, false, false, false};
-  return msg;
+  rs_autonomy::ArmFaultConfig srv;
+  srv.request.action = "Clear";
+  srv.request.arm_fault_var_ids = { 1, 2, 3, 4, 5, 6 };
+  srv.request.values = {false, false, false, false, false, false};
+  return srv;
 }
 
-void TaskExecutor::callback(const rs_autonomy::PlannerInstruction planner_inst)
+void TaskExecutor::callback_planner_inst(const rs_autonomy::PlannerInstruction planner_inst)
 {
   // FIXME: Clear Arm Fault
   // * This is a workaround to simulate the arm fault has been cleared. It is to
@@ -37,12 +39,12 @@ void TaskExecutor::callback(const rs_autonomy::PlannerInstruction planner_inst)
   { 
     // When the command is "ADD", the aux_info represents the high-level plan
     //
-    // The plan_name in planner_instruction is the name of the root node in the,
+    // The plan_name in planner_inst is the name of the root node in the,
     // plexil plan, e.g., Exca. While the plan name sent to be executed on the lander
     // should be the full file name of the compiled plexil plan, e.g., Exca.plx.
-    plan_translation.task_name = planner_inst.task_name;
-    plan_translation.plan_name = planner_inst.plan_name;
-    plan_translation.high_level_plan = planner_inst.aux_info;
+    plan_translation.request.task_name = planner_inst.task_name;
+    plan_translation.request.plan_name = planner_inst.plan_name;
+    plan_translation.request.high_level_plan = planner_inst.aux_info;
 
     // After calling translation service successfully, we get a
     // PLEXIL plan (*.plp file) and a compiled PLEXIL plan (*.plx file)
@@ -62,7 +64,7 @@ void TaskExecutor::callback(const rs_autonomy::PlannerInstruction planner_inst)
   // FIXME: The current autonomy design leads to that there is only one plexil 
   //        plan in the plan array, plans.
   std::vector<std::string> plan_array;
-  plan_array.push_back(planner_instruction.plan_name + ".plx");
+  plan_array.push_back(planner_inst.plan_name + ".plx");
 
   execute_instruction.request.command = planner_inst.command;
   execute_instruction.request.plans = plan_array;
