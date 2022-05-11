@@ -23,6 +23,7 @@
 #include <vector>
 #include <cstdlib>
 
+
 class Task {
   public:
     Task(std::string name, std::string status, std::string aux_info) {
@@ -45,6 +46,17 @@ class Task {
 
 class MissionController {
   public:
+    MissionController(ros::NodeHandle *nh)
+    {
+      new_task_pub = nh.advertise<rs_autonomy::NextTask>(
+    		      "/Mission/NextTask", msg_queue_size)
+      current_task_sub = nh.subscribe<rs_autonomy::CurrentTask>(
+    		      "/Analysis/CurrentTask",
+    		      msg_queue_size,
+    		      &MissionController::callback_current_task_status,
+    		      this);
+    }
+
     ros::Publisher& new_task_pub;
     void callback_current_task_status(const rs_autonomy::CurrentTask msg);
 
@@ -61,6 +73,8 @@ class MissionController {
     void prepare_task_to_run();
     void report_mission_result();
     bool prepare_evaluation_task_dir();
+  private:
+    ros::Subscriber current_task_sub;
 };
 
 bool MissionController::prepare_evaluation_task_dir(std::string task_name)
@@ -186,39 +200,6 @@ void MissionController::callback_current_task_status(const rs_autonomy::CurrentT
 }
 
 
-class Task {
-  public:
-    std::string name = "";
-    // Types of Task Status
-    // "Sent" // sent to the analysis componenet
-    // "Starts"
-    // "Terminated"
-    // "Completed_Success"
-    // "Completed_Failure"
-    std::string status = "";
-    std::string aux_info = "";
-};
-
-class MissionController {
-  public:
-    ros::Publisher& next_task_pub;
-    rs_autonomy::NextTask next_task;
-    std::vector<Task> past_task_list; 
-    Task current_task = Task();
-    std::vector<std::string> model_names = {"SciVal", "ExcaProb"}
-    void callback_current_task_status(const rs_autonomy::CurrentTask msg);
-
-    // FIXME: the following members are used to demonstrate running several
-    //        excavation tasks. They should be modified accordingly when
-    //        new tasks are designed for the mission.
-    int current_task_idx = -1;
-    std::vector<std::string> task_names_list;
-    std::map<std::string, std::string> mission_spec; // a dictionary of tasks
-    void load_mission_spec(std::string mission_spec_fp); // load from a file    
-    void determine_next_task();
-};
-
-
 
 int main(int argc, char* argv[])
 {
@@ -237,15 +218,8 @@ int main(int argc, char* argv[])
   // Initialization
   ros::init(argc, argv, "autonomy_node");
   ros::NodeHandle nh;
-  MissionController mission_controller;
-  mission_controller.new_task_pub = nh.advertise<rs_autonomy::NextTask>(
-		  "/Mission/NextTask", msg_queue_size)
-  ros::Subscriber current_task_sub = nh.subscribe<rs_autonomy::CurrentTask>(
-		  "/Analysis/CurrentTask",
-		  msg_queue_size,
-		  &MissionController::callback_current_task_status,
-		  &mission_controller);
 
+  MissionController mission_controller(&nh);
   // Load the mission specification and start to run the first task
   mission_controller.load_mission_spec(mission_spec_fp);
   mission_controller.prepare_task_to_run();

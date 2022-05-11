@@ -19,8 +19,21 @@
 #include "message_passing_support.h" // for msg_queue_size
 
 
-class PlannerInstructionListener {
+class TaskExecutor {
   public:
+    TaskExecutor(ros::NodeHandle *nh)
+    {
+      // ROS service clients
+      plan_selection_service_client = nh->serviceClient<ow_plexil::PlanSelection>("/plexil_plan_selection");
+      fault_management_service_client = nh->serviceClient<rs_autonomy::ArmFaultConfig>("/arm_fault_management");
+      plan_translation_service_client = nh->serviceClient<rs_autonomy::PlanTranslation>("/plan_translation");
+      // callbacks for subscribers
+      plan_inst_sub = nh.subscribe<rs_autonomy::PlannerInstruction>(
+    		      "/PlannerInstruction",
+    		      msg_queue_size,
+    		      &TaskExecutor::callback,
+    		      this);
+    }
 
     // ROS client for calling '/plan_translation' service
     rs_autonomy::PlanTranslation plan_translation;
@@ -33,9 +46,11 @@ class PlannerInstructionListener {
     ros::Serviceclient fault_management_service_client;
 
     void callback(const rs_autonomy::PlannerInstruction planner_instruction);
+  private:
+    ros::Subscriber plan_inst_sub;
 };
 
-ArmFaultConfig PlannerInstructionListener::create_fault_clear_msg()
+ArmFaultConfig TaskExecutor::create_fault_clear_msg()
 {
   ArmFaultconfig msg;
   msg.action = "Clear";
@@ -44,7 +59,7 @@ ArmFaultConfig PlannerInstructionListener::create_fault_clear_msg()
   return msg;
 }
 
-void PlannerInstructionListener::callback(const rs_autonomy::PlannerInstruction planner_inst)
+void TaskExecutor::callback(const rs_autonomy::PlannerInstruction planner_inst)
 {
   // FIXME: Clear Arm Fault
   // * This is a workaround to simulate the arm fault has been cleared. It is to
@@ -127,20 +142,7 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
 
-
-  PlannerInstructionListener piListener;
-  // ROS service clients
-  piListener.plan_selection_service_client = nh.serviceClient<ow_plexil::PlanSelection>("/plexil_plan_selection");
-  piListener.fault_management_service_client = nh.serviceClient<rs_autonomy::ArmFaultConfig>("/arm_fault_management");
-  piListener.plan_translation_service_client = nh.serviceClient<rs_autonomy::PlanTranslation>("/plan_translation");
-
-  // callbacks for subscribers
-  ros::Subscriber el_sub = nh.subscribe<rs_autonomy::PlannerInstruction>(
-		  "/PlannerInstruction",
-		  msg_queue_size,
-		  &PlannerInstructionListener::callback,
-		  &piListener);
-
+  TaskExecutor task_executor(&nh);
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {

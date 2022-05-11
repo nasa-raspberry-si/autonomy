@@ -12,8 +12,21 @@
 #include <string>
 
 
-class AdaptationInstructionListener {
+class TaskPlanner {
   public:
+    TaskPlanner(ros::NodeHandle *nh)
+    {
+      planner_inst_pub =  nh->advertise<rs_autonomy::PlannerInstruction>(
+		      "/PlannerInstruction",
+		      msg_queue_size);
+      adap_inst_sub = nh->subscribe<rs_autonomy::AdaptationInstruction>(
+		      "/AdaptationInstruction",
+		      msg_queue_size,
+		      &TaskPlanner::callback_adap_inst_sub,
+		      this);
+      task_planning_service_client = nh->serviceClient<rs_autonomy::TaskPlanning>("/task_planning"); 
+    }
+
     // publisher
     ros::Publisher planner_inst_pub;
     rs_autonomy::PlannerInstruction planner_instruction;
@@ -32,9 +45,11 @@ class AdaptationInstructionListener {
     std::string task_name = "";
     std::string current_plan_name = "";
     int current_plan_id = 0; // 0 indiates no plan has been tried for the task
+  private:
+    ros::Subscriber adap_inst_sub;
 };
 
-void AdaptationInstructionListener::callback_adap_inst_sub(const rs_autonomy::AdaptationInstruction adpt_inst)
+void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstruction adpt_inst)
 {
   for (auto command : adpt_inst.adaptation_commands)
   {
@@ -120,19 +135,7 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
 
-  AdaptationInstructionListener adptListener;
-
-  adptListener.planner_inst_pub =  nh.advertise<rs_autonomy::PlannerInstruction>(
-		  "/PlannerInstruction",
-		  msg_queue_size);
-
-  ros::Subscriber adap_inst_sub = nh.subscribe<rs_autonomy::AdaptationInstruction>(
-		  "/AdaptationInstruction",
-		  msg_queue_size,
-		  &AdaptationInstructionListener::callback_adap_inst_sub,
-		  &adptListener);
-
-  adptListener.task_planning_service_client = nh.serviceClient<rs_autonomy::TaskPlanning>("/task_planning"); 
+  TaskPlanner task_planner(&nh);
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {

@@ -37,8 +37,54 @@
 //
 // FIXME: for other excavation cases and cases in other task (sample identification)
 //        this function needs to be updated accordingly
-class MonitorInfoListener {
+class AdaptationAnalyzer {
   public:
+    AdaptationAnalyzer(ros::NodeHandle *nh)
+    {
+      // Publisher for sending adaptation commands to the planner component
+      adpt_inst_pub = nh->advertise<rs_autonomy::AdaptationInstruction>(
+ 		      "/AdaptationInstruction", msg_queue_size);
+      current_task_status_pub = nh->advertise<rs_autonomy::CurrentTask>(
+		      "/Analysis/CurrentTask", msg_queue_size);
+
+      // callbacks for subscribered ROS topics
+      next_task_sub = nh->subscribe<rs_autonomy::NextTask>(
+    		      "/Mission/NextTask",
+    		      msg_queue_size,
+    		      &AdaptationAnalyzer::callback_next_task,
+    		      this);
+      current_plan_sub = nh->subscribe<ow_plexil::CurrentPlan>(
+    		      "/Monitor/CurrentPlan",
+    		      msg_queue_size,
+    		      &AdaptationAnalyzer::callback_current_plan,
+    		      this);
+      arm_fault_sub = nh->subscribe<rs_autonomy::ArmFault>(
+    		      "/Monitor/ArmFaultStatus",
+    		      msg_queue_size,
+    		      &AdaptationAnalyzer::callback_arm_fault_status,
+    		      this);
+      current_operation_sub = nh->subscribe<ow_plexil::CurrentOperation>(
+    		      "/Monitor/CurrentOperation",
+    		      msg_queue_size,
+    		      &AdaptationAnalyzer::callback_current_operation,
+    		      this);
+      vibration_level_sub = nh->subscribe<rs_autonomy::VibrationLevel>(
+    		      "/Monitor/VibrationLevelChanged",
+    		      msg_queue_size,
+    		      &AdaptationAnalyzer::callback_vibration_level_changed,
+    		      this);
+      earth_inst_sub = nh->subscribe<rs_autonomy::EarthInstruction>(
+    		      "/Monitor/EarthInstruction",
+    		      msg_queue_size,
+    		      &AdaptationAnalyzer::callback_earth_inst,
+    		      this);
+      
+      // ROS clients for update models and runtime information
+      rtInfo_maintenence_service_client = nh->serviceClient<rs_autonomy::RTInfoMaintenanceInstruction>("//runtime_info_maintenance");
+      model_update_service_client = nh->serviceClient<rs_autonomy::ModelUpdateInstruction>("/update_models");
+
+    }
+
     // Publisher and message for sending the instruction to the plan component
     ros::Publisher adpt_inst_pub;
     ros::Publisher current_task_status_pub;
@@ -88,7 +134,8 @@ class MonitorInfoListener {
     void update_task_control_vars();
     void update_models(std::vector<std::string> model_names);
     void maintain_rtInfo(std::string action, std::string aux_info);
-    void initialize_task(bool syn_plan=true, bool terminate_current_task=false); // syn_plan indicates to synthesize a plan
+    //// syn_plan indicates to synthesize a plan
+    void initialize_task(bool syn_plan=true, bool terminate_current_task=false);
     void initialize_rtInfo();
     void transition_to_safe_pose();
     void planning();
@@ -109,9 +156,18 @@ class MonitorInfoListener {
 
     // constantly checking if an adaptation is needed
     void adaptation_analysis();
+
+  private:
+    ros::Subscriber next_task_sub;
+    ros::Subscriber current_plan_sub;
+    ros::Subscriber arm_fault_sub;
+    ros::Subscriber current_operation_sub;
+    ros::Subscriber vibration_level_sub;
+    ros::Subscriber earth_inst_sub;
+ 
 };
 
-void MonitorInfoListener::callback_current_plan(const ow_plexil::CurrentPlan current_plan)
+void AdaptationAnalyzer::callback_current_plan(const ow_plexil::CurrentPlan current_plan)
 {
   ROS_INFO_STREAM("[Analysis Node] the current plan, " << current_plan.plan_name << ", status: " << current_plan.plan_status);
   plan_name = current_plan.plan_name;
@@ -121,7 +177,7 @@ void MonitorInfoListener::callback_current_plan(const ow_plexil::CurrentPlan cur
   plan_aux_info = current_plan.aux_info;
 }
 
-void MonitorInfoListener::callback_next_task(const rs_autonomy::NextTask next_task)
+void AdaptationAnalyzer::callback_next_task(const rs_autonomy::NextTask next_task)
 {
   ROS_INFO_STREAM("[Analysis Node] a new task is requested by the Mission control center.");
   terminate_current_task = next_task.terminate_current_task;
@@ -131,14 +187,14 @@ void MonitorInfoListener::callback_next_task(const rs_autonomy::NextTask next_ta
   has_new_task = true;
 }
 
-void MonitorInfoListener::callback_arm_fault_status(const rs_autonomy::ArmFault arm_fault)
+void AdaptationAnalyzer::callback_arm_fault_status(const rs_autonomy::ArmFault arm_fault)
 {
   ROS_INFO_STREAM("[Analysis Node] a change of arm fault status is notified");
   has_arm_fault = arm_fault.has_a_fault;
   update_local_vars();
 }
 
-void MonitorInfoListener::callback_current_operation(const ow_plexil::CurrentOperation.h current_op)
+void AdaptationAnalyzer::callback_current_operation(const ow_plexil::CurrentOperation.h current_op)
 {
   ROS_INFO_STREAM("[Analysis Node] the current operation " << current_op.op_name << ", status: " << current_op.op_status);
   current_op_name = current_op.op_name;
@@ -146,14 +202,14 @@ void MonitorInfoListener::callback_current_operation(const ow_plexil::CurrentOpe
   update_local_vars();
 }
 
-void MonitorInfoListener::callback_vibration_level_changed(const rs_autonomy::VibrationLevel vl)
+void AdaptationAnalyzer::callback_vibration_level_changed(const rs_autonomy::VibrationLevel vl)
 {
   ROS_INFO_STREAM("[Analysis Node] the vibration level is changed from level " << vibration_level << " to level " << v_level);
   vibration_level = vl.level;
   wait_for_quake_off = !wait_for_quake_off;
 
 
-void MonitorInfoListener::callback_earth_inst(const rs_autonomy::EarthInstruction earth_inst)
+void AdaptationAnalyzer::callback_earth_inst(const rs_autonomy::EarthInstruction earth_inst)
 {
   if (earth_inst.plan_name != "") {
     // Assume the plan name follows the format, ManualPlanXXX.plx
@@ -170,7 +226,7 @@ void MonitorInfoListener::callback_earth_inst(const rs_autonomy::EarthInstructio
 // FIXME:
 // This is to assist the simulation of excavation failure.
 // It should be replaced when a more realistic simulation is available
-void MonitorInfoListener::update_local_vars(){
+void AdaptationAnalyzer::update_local_vars(){
   if (has_arm_fault)
   {
     if (current_op_name == "Digging" && current_op_status == "starts")
@@ -183,7 +239,7 @@ void MonitorInfoListener::update_local_vars(){
 
 // ROS service request: Update Models
 // Currently supported models: "SciVal", "ExcaProb"
-void MonitorInfoListener::update_models(std::vector<std::string> model_names)
+void AdaptationAnalyzer::update_models(std::vector<std::string> model_names)
 {
   model_update_inst.task_name = task_name;
   model_update_inst.model_names = model_names;
@@ -204,7 +260,7 @@ void MonitorInfoListener::update_models(std::vector<std::string> model_names)
 // "Initialize"    "#xloc,dloc"
 // "Update"        "model1", "model1,model2", ...
 // "Remove"        "item1_ID", ...
-void MonitorInfoListener::maintain_rtInfo(std::string action, std::string aux_info)
+void AdaptationAnalyzer::maintain_rtInfo(std::string action, std::string aux_info)
 {
   rtInfo_maintenance_inst.task_name = current_task_name;
   rtInfo_maintenance_inst.action = action;
@@ -219,7 +275,7 @@ void MonitorInfoListener::maintain_rtInfo(std::string action, std::string aux_in
   }
 }
 
-void MonitorInfoListener::update_task_control_vars()
+void AdaptationAnalyzer::update_task_control_vars()
 {
   current_task_name = next_task_name;
   next_task_name = "";
@@ -310,7 +366,7 @@ void MonitorListener::initialize_task(bool syn_plan=true, bool terminate_current
   }
 }
 
-void MonitorInfoListener::adaptation_analysis()
+void AdaptationAnalyzer::adaptation_analysis()
 {
     bool has_arm_fault = false;
     std::string current_op_name = "":
@@ -410,55 +466,12 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
 
-  MonitorInfoListener listener;
-  // Publisher for sending adaptation commands to the planner component
-  listener.adpt_inst_pub = nh.advertise<rs_autonomy::AdaptationInstruction>(
-		  "/AdaptationInstruction", msg_queue_size);
-
-  listener.current_task_status_pub = nh.advertise<rs_autonomy::CurrentTask>(
-		  "/Analysis/CurrentTask", msg_queue_size);
-
-  // callbacks for subscribered ROS topics
-  ros::Subscriber next_task_sub = nh.subscribe<rs_autonomy::NextTask>(
-		  "/Mission/NextTask",
-		  msg_queue_size,
-		  &MonitorInfoListener::callback_next_task,
-		  &listener);
-  ros::Subscriber current_plan_sub = nh.subscribe<ow_plexil::CurrentPlan>(
-		  "/Monitor/CurrentPlan",
-		  msg_queue_size,
-		  &MonitorInfoListener::callback_current_plan,
-		  &listener);
-  ros::Subscriber arm_fault_sub = nh.subscribe<rs_autonomy::ArmFault>(
-		  "/Monitor/ArmFaultStatus",
-		  msg_queue_size,
-		  &MonitorInfoListener::callback_arm_fault_status,
-		  &listener);
-  ros::Subscriber current_operation_sub = nh.subscribe<ow_plexil::CurrentOperation>(
-		  "/Monitor/CurrentOperation",
-		  msg_queue_size,
-		  &MonitorInfoListener::callback_current_operation,
-		  &listener);
-  ros::Subscriber vibration_level_sub = nh.subscribe<rs_autonomy::VibrationLevel>(
-		  "/Monitor/VibrationLevelChanged",
-		  msg_queue_size,
-		  &MonitorInfoListener::callback_vibration_level_changed,
-		  &listener);
-  ros::Subscriber earth_inst_sub = nh.subscribe<rs_autonomy::EarthInstruction>(
-		  "/Monitor/EarthInstruction",
-		  msg_queue_size,
-		  &MonitorInfoListener::callback_earth_inst,
-		  &listener);
-
-  // ROS clients for update models and runtime information
-  listener.rtInfo_maintenence_service_client = nh.serviceClient<rs_autonomy::RTInfoMaintenanceInstruction>("//runtime_info_maintenance");
-  listener.model_update_service_client = nh.serviceClient<rs_autonomy::ModelUpdateInstruction>("/update_models");
-
+  AdaptationAnalyzer adaptation_analyzer(&nh);
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {
-    // analyze if some adaptation should be performed
-    listener.adaptation_analysis();
+    // determine if some adaptation should be performed
+    adaptation_analyzer.adaptation_analysis();
 
     ros::spinOnce();
     rate.sleep();

@@ -20,10 +20,46 @@
 
 
 
-
-
 class SysEnvMonitor {
   public:
+    SysEnvMonitor(ros::NodeHandle *nh)
+    {
+      // Initialize publishers
+      current_plan_pub = nh->advertise<ow_plexil::CurrentPlan>(
+		  "/Monitor/CurrentPlan", msg_queue_size);
+      current_op_pub = nh->advertise<ow_plexil::CurrentOperation>(
+		  "/Monitor/CurrentOperation", msg_queue_size);
+      vibration_level_changed_pub = nh->advertise<rs_autonomy::VibrationLevel>(
+		  "/Monitor/VibrationLevelChanged", msg_queue_size);
+      arm_fault_changed_pub = nh->advertise<ow_>(
+		  "/Monitor/ArmFaultStatus", msg_queue_size);
+
+      // Initialize subscribers and bind callbacks
+      // The messages from /faults/arm_faults_status and /Env/VibrationLevel
+      // may be relatively fast, so set a large size of queue.
+      arm_fault_sub = nh.subscribe<ow_faults::ArmFaults>(
+		      "/faults/arm_faults_status",
+    		      100,
+		      &SysEnvMonitor::callback_arm_fault_status,
+		      this);
+      vibration_level_sub = nh.subscribe<rs_autonomy::VibrationLevel>(
+    		      "/Env/VibrationLevel",
+		      100,
+		      &SysEnvMonitor::callback_vibration_level,
+		      this);
+      current_op_sub = nh.subscribe<ow_plexil::CurrentOperation>(
+    		      "/CurrentOperation",
+    		      msg_queue_size,
+    		      &SysEnvMonitor::callback_current_op,
+    		      this);
+      current_plan_sub = nh.subscribe<ow_plexil::CurrentPlan>(
+    		      "/current_plan_status",
+    		      msg_queue_size,
+    		      &SysEnvMonitor::callback_current_plan,
+    		      this);
+    }
+
+
     // publishers
     ros::Publisher current_plan_pub;
     ros::Publisher current_op_pub;
@@ -45,6 +81,12 @@ class SysEnvMonitor {
 
     rs_autonomy::VibrationLevel vl_msg;
     rs_autonomy::ArmFault arm_fault_msg;
+
+  private:
+    ros::Subscriber arm_fault_sub;
+    ros::Subscriber vibration_level_sub;
+    ros::Subscriber current_op_sub;
+    ros::Subscriber current_plan_sub;
 };
 
 void SysEnvMonitor::callback_arm_fault_status(const ow_faults::ArmFaults::ConstPtr& msg)
@@ -77,25 +119,6 @@ void SysEnvMonitor::callback_vibration_level(const rs_autonomy::VibrationLevel v
   }
 }
 
-void SysEnvMonitor::callback_arm_fault(const ???)
-{
-  if (vl.level != vibration_level)
-  {
-    vl_msg.level = vl.level;
-    vibration_level = vl.level;
-    vibration_level_pub.publish(vl_msg);
-  }
-}
-
-void CurrentPlanListener::callback(const ow_plexil::CurrentPlan current_plan)
-{
-  ROS_INFO_STREAM("[Monitor Node - Listener] current plan: " << current_plan.plan_name << ", status: " << current_plan.plan_status);
-
-  this->current_plan.task_name = current_plan.plan_name;
-  this->current_plan.task_status = current_plan.plan_status;
-
-  this->pub.publish(this->current_plan);
-}
 
 int main(int argc, char* argv[])
 {
@@ -105,52 +128,10 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
 
-
-  SysEnvMonitor monitor;
-  // Initialize publishers
-  monitor.current_plan_pub = nh.advertise<ow_plexil::CurrentPlan>(
-		  "/Monitor/CurrentPlan", msg_queue_size);
-  monitor.current_op_pub = nh.advertise<ow_plexil::CurrentOperation>(
-		  "/Monitor/CurrentOperation", msg_queue_size);
-  monitor.vibration_level_changed_pub = nh.advertise<rs_autonomy::VibrationLevel>(
-		  "/Monitor/VibrationLevelChanged", msg_queue_size);
-  monitor.arm_fault_changed_pub = nh.advertise<ow_>(
-		  "/Monitor/ArmFaultStatus", msg_queue_size);
-
-  // Initialize subscribers and bind callbacks
-  // The messages from /faults/arm_faults_status and /Env/VibrationLevel
-  // may be relatively fast, so set a large size of queue.
-  ros::Subscriber arm_fault_sub = nh.subscribe<ow_faults::ArmFaults>(
-		  "/faults/arm_faults_status",
-		  100,
-		  SysEnvMonitor::callback_arm_fault_status,
-		  &monitor);
-  ros::Subscriber vibration_level_sub = nh.subscribe<rs_autonomy::VibrationLevel>(
-		  "/Env/VibrationLevel",
-		  100,
-		  SysEnvMonitor::callback_vibration_level,
-		  &monitor);
-  ros::Subscriber current_op_sub = nh.subscribe<ow_plexil::CurrentOperation>(
-		  "/CurrentOperation",
-		  msg_queue_size,
-		  SysEnvMonitor::callback_current_op,
-		  &monitor);
-  ros::Subscriber current_plan_sub = nh.subscribe<ow_plexil::CurrentPlan>(
-		  "/current_plan_status",
-		  msg_queue_size,
-		  SysEnvMonitor::callback_current_plan,
-		  &monitor);
-
-
-
+  SysEnvMonitor monitor = SysEnvMonitor(&nh);
+  
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {
-    /*
-    if(t) {
-      m_pub.publish(m_msg);
-      t = false;
-    }
-    */
     ros::spinOnce();
     rate.sleep();
   }
