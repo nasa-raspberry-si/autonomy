@@ -2,7 +2,7 @@
 
 <launch>
   <arg name="plan" default="None"/>
-  <arg name="mission_spec_fp" default="None"/>
+  <arg name="mission_spec_filename" default="None"/>
   <!--
   Environment Variables
   1 EVALUATION_ROOT_DIR
@@ -14,9 +14,9 @@
   3 PLEXIL_LIB_COMPILED_PLAN_DIR
 	assists moving the compiled PLEXIL plan (*.plx) to the destination
   -->
-  <env name="EVALUATION_ROOT_DIR" default="None"/>
-  <env name="OW_PLEXIL_LIB_SOURCE_DIR" default="None"/>
-  <env name="PLEXIL_LIB_COMPILED_PLAN_DIR" default="None"/>
+  <env name="EVALUATION_ROOT_DIR" value="$(optenv EVALUATION_ROOT_DIR)"/>
+  <env name="OW_PLEXIL_LIB_SOURCE_DIR" value="$(OW_PLEXIL_LIB_SOURCE_DIR)"/>
+  <env name="PLEXIL_LIB_COMPILED_PLAN_DIR" value="$(PLEXIL_LIB_COMPILED_PLAN_DIR)"/>
 
 
   <node pkg="rs_autonomy"
@@ -71,7 +71,7 @@
   <node pkg="rs_autonomy"
         name="mission_control_node"
         type="mission_control_node"
-        args"$(arg mission_spec_fp)"
+        args="$(arg mission_spec_fp)"
         output="screen">
   </node>
 

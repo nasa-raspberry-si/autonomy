@@ -3,17 +3,11 @@
 bool MissionController::prepare_evaluation_task_dir(std::string task_name)
 {
   bool result = false;
-  char *eval_root_dir = getenv("EVALUATION_ROOT_DIR");
-  if(eval_root_dir == NULL) {
-    ROS_ERROR("Environment variable $PLEXIL_PLAN_DIR is not set.");
-    return result;
-  }
 
   // Create a directory for organizing the evaluation result for the task, task_name
-  if (task_name.find("Evaluation")!=std::string::npos)
+  if (task_name.find("Excavation")!=std::string::npos)
   {
-    std::string eval_task_dir;
-    eval_task_dir = std::string(eval_root_dir) + "/Tasks/" + task_name;
+    std::string eval_task_dir = eval_root_dir + "/Tasks/" + task_name;
     std::string command;
     command = "mkdir -p "+ eval_task_dir;  
     system(command.c_str());

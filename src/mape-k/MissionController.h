@@ -50,8 +50,10 @@ class Task {
 
 class MissionController {
   public:
-    MissionController(ros::NodeHandle *nh)
+    MissionController(ros::NodeHandle *nh, std::string eval_root_dir)
     {
+      this->eval_root_dir = eval_root_dir;
+      
       new_task_pub = nh->advertise<rs_autonomy::NextTask>(
     		      "/Mission/NextTask", msg_queue_size);
 
@@ -62,6 +64,7 @@ class MissionController {
     		      this);
     }
 
+    std::string eval_root_dir;
     ros::Publisher new_task_pub;
     void callback_current_task_status(const rs_autonomy::CurrentTask msg);
 
