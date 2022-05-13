@@ -11,7 +11,7 @@ from rospy import loginfo
 # ROS services
 from rs_autonomy.srv import TaskPlanning, TaskPlanningResponse
 # Prism Model Genration
-from prism-planning.gen_prism_model import ExcaPrismModelGenerator
+from prism_planning.gen_prism_model import ExcaPrismModelGenerator
 
 # Environment Variables
 # 1 Assist loading run-time info file and dumping synthesized PLEXIL plan to a file

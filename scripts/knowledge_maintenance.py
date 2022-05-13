@@ -11,8 +11,8 @@ from rs_autonomy.srv import RTInfoMaintenanceInstruction, RTInfoMaintenanceInstr
 from rs_autonomy.srv import ModelUpdateInstruction, ModelUpdateInstructionResponse
 
 # knowledge-update package
-from knowledge-update.maintain_runtime_info import RuntimeInfoMaintenance
-from knowledge-update.maintain_models import ModelUpdater
+from knowledge_update.maintain_runtime_info import RuntimeInfoMaintenance
+from knowledge_update.maintain_models import ModelUpdater
 
 
 # Environment Variables

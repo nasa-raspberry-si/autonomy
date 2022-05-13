@@ -11,7 +11,7 @@ from rospy import loginfo
 # ROS services
 from rs_autonomy.srv import PlanTranslation, PlanTranslationResponse
 # PLEXIL plan translation
-from plan-translation.plexil_plan_translator import PlexilPlanTranslator
+from plan_translation.plexil_plan_translator import PlexilPlanTranslator
 
 # Environment Variables
 # 1 Assist loading run-time info file and dumping synthesized PLEXIL plan to a file

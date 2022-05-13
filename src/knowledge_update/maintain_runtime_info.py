@@ -159,7 +159,7 @@ class RuntimeInfoMaintenance():
         success = True
         if len(model_names) == len(self.model_names):
             xloc_num = len(self.runtime_info['xloc_list'])
-            dloc_num = len(self.runtime_info['dloc_list']))
+            dloc_num = len(self.runtime_info['dloc_list'])
             # re-initialize the runtime info while keeping the numbers of locations
             success = self.initialize_rt_info(xloc_num, dloc_num)
         else:
@@ -184,7 +184,7 @@ class RuntimeInfoMaintenance():
             self.update_rt_info_using_ExcaProb()
         else:
             loginfo("Unknown model: " + model_name)
-            msg = "Currently supported models:"\n\t{}
+            msg = "Currently supported models:"
             for model_name in self.model_names:
                 msg = msg + "\n\t" + model_name
             loginfo(msg)
@@ -223,8 +223,9 @@ class RuntimeInfoMaintenance():
 
         with open(self.runtime_info_fp, "w") as outfile: 
             json.dump(self.runtime_info, outfile)
-        loginfo("The update of the runtime info is sucessful: " + (success?"yes":"no"))
+        msg = "Success"
+        if not success:
+            msg = "Failure"
+        loginfo("The update of the runtime info: " + msg)
 
         return success
-
-

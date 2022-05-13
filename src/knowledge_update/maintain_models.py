@@ -49,11 +49,11 @@ class ModelUpdater():
         fp = self.models_dir + "/" + model_name + ".model"
         if model_name == "SciVal":
             self.updateScienceValueModel()
-        else if model_name == "ExcaProb":
+        elif model_name == "ExcaProb":
             self.updateExcaProbModel()
         else:
             loginfo("Unsupported model: {}".format(model_name))
-            msg = "Currently supported models:"\n\t{}
+            msg = "Currently supported models:"
             for model_name in self.model_names:
                 msg = msg + "\n\t" + model_name
             loginfo(msg)
