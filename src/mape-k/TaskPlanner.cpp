@@ -2,29 +2,34 @@
 
 void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstruction adpt_inst)
 {
+  std::string task_name = adpt_inst.task_name;
   for (auto command : adpt_inst.adaptation_commands)
   {
     bool is_valid_cmd = true;
     if (command == "TerminatePlan")
     {
+      planner_instruction.task_name = task_name;
       planner_instruction.command = "TERMINATE";
       planner_instruction.plan_name = current_plan_name;
       planner_instruction.aux_info = "";
     }
     else if (command == "ClearArmFault")
     {
+      planner_instruction.task_name = task_name;
       planner_instruction.command = "ClearArmFault";
       planner_instruction.plan_name = current_plan_name;
       planner_instruction.aux_info = "";
     }
     else if (command == "Unstow") // send a PLEXIL plan for unstowing the arm
     {
+      planner_instruction.task_name = task_name;
       planner_instruction.command = "ADD";
       planner_instruction.plan_name = "Unstow";
       planner_instruction.aux_info = "";
     }
     else if (command.find("ManualPlan") != std::string::npos)
     {
+      planner_instruction.task_name = task_name;
       planner_instruction.command = "ADD";
       planner_instruction.plan_name = command; // the command variable is the plan name
       planner_instruction.aux_info = "";
@@ -41,11 +46,13 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
         current_plan_id = 1; // frist plan for the new task
       }
       current_plan_name = task_name + "Plan" + std::to_string(current_plan_id);
+      task_planning.request.task_name = task_name;
+      task_planning.request.plan_name = current_plan_name;
 
       if (task_planning_service_client.call(task_planning))
       {
         ROS_INFO_STREAM("[Planner Node] high-level plan is " << task_planning.response.high_level_plan);
-
+        planner_instruction.task_name = task_name;
         planner_instruction.command = "ADD";
         planner_instruction.plan_name = current_plan_name;
         planner_instruction.aux_info = task_planning.response.high_level_plan;
@@ -71,7 +78,8 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
       this->planner_inst_pub.publish(this->planner_instruction);
 
       ROS_INFO_STREAM(
-        "[Planner Node - Listener] send a planner instruction for the current task: "
+        "[Planner Node] send a planner instruction for the current task: "
+        << "\n\ttask_name:" << this->planner_instruction.task_name
         << "\n\tcommand: " << this->planner_instruction.command
         << "\n\tplan_name:" << this->planner_instruction.plan_name
         << "\n\taux_info: " << this->planner_instruction.aux_info

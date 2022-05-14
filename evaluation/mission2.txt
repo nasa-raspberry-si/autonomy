@@ -1,0 +1,2 @@
+Task:Excavation1|Aux_Info:8,4
+Task:Excavation2|Aux_Info:10,6

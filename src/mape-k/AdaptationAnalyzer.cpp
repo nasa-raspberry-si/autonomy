@@ -7,6 +7,11 @@ void AdaptationAnalyzer::callback_current_plan(const ow_plexil::CurrentPlan curr
   ROS_INFO_STREAM("[Analysis Node] the current plan, " << current_plan.plan_name << ", status: " << current_plan.plan_status);
   plan_name = current_plan.plan_name;
   plan_status = current_plan.plan_status;
+
+  if (plan_status == "Completed_Success")
+  {
+    current_task_status = "Completed_Success";
+  }
 }
 
 void AdaptationAnalyzer::callback_high_level_plan(const rs_autonomy::HighLevelPlan msg)
@@ -34,6 +39,7 @@ void AdaptationAnalyzer::callback_arm_fault_status(const rs_autonomy::ArmFault a
 {
   ROS_INFO_STREAM("[Analysis Node] a change of arm fault status is notified");
   has_arm_fault = arm_fault.has_a_fault;
+  plan_status = "StopByArmFault";
   update_local_vars();
 }
 
@@ -150,6 +156,7 @@ void AdaptationAnalyzer::initialize_rtInfo()
 // Transition the lander to a safey pose (Unstow pose) with arm fault cleared
 void AdaptationAnalyzer::transition_to_safe_pose()
 {
+  ROS_INFO_STREAM("[Analysis Node] Transitioning the arm to a safe pose");
   adpt_inst.adaptation_commands = { "TerminatePlan", "Unstow"};
   if (has_arm_fault)
   {
@@ -174,6 +181,9 @@ void AdaptationAnalyzer::initialize_task(bool syn_plan, bool terminate_current_t
   // so terminate the plan and transition the lander to the safe pose, Unstow pose.
   if (current_task_status == "Started")
   {
+    ROS_INFO_STREAM("[Analysis Node] terminating the current plan of the current task"
+                    << current_task_name);
+
     transition_to_safe_pose();
     if(terminate_current_task)
     {
@@ -181,13 +191,16 @@ void AdaptationAnalyzer::initialize_task(bool syn_plan, bool terminate_current_t
       current_task_msg.name = current_task_name;
       current_task_msg.status = "Terminated";
       current_task_status_pub.publish(current_task_msg);
+      ROS_INFO_STREAM("[Analysis Node] the current task is terminated");
     }
   }
 
   // if there is a new task, update task control variables to transition to the new task 
   if (has_new_task)
   {
+    ROS_INFO_STREAM("[Analysis Node] transitioning to the new task");
     update_task_control_vars();
+    ROS_INFO_STREAM("[Analysis Node] ready to do the new task: " << current_task_name);
   }
 
   if (!wait_for_quake_off)
@@ -197,34 +210,37 @@ void AdaptationAnalyzer::initialize_task(bool syn_plan, bool terminate_current_t
 
     if (syn_plan) // Synthesize a plan to run
     {
+      ROS_INFO_STREAM("[Analysis Node] request a plan for the task " << current_task_name);
       planning();
+
       if(current_task_status == "Ready")
       {
         current_task_status = "Started";
-	rs_autonomy::CurrentTask current_task_msg;
-	current_task_msg.name = current_task_name;
-	current_task_msg.status = current_task_status;
+        rs_autonomy::CurrentTask current_task_msg;
+        current_task_msg.name = current_task_name;
+        current_task_msg.status = current_task_status;
         current_task_status_pub.publish(current_task_msg);
       }
+      /*
+      ROS_INFO_STREAM("[Analysis Node] the task "
+                      << current_task_name
+                      <<" is ready to run a plan "
+                      << plan_name);
+      */
     }
+  }
+  else
+  {
+    ROS_INFO_STREAM("[Analysis Node] the lander is waiting for the quake to pass.");
   }
 }
 
 void AdaptationAnalyzer::adaptation_analysis()
 {
-  bool has_arm_fault = false;
-  std::string current_op_name = "";
-  std::string current_op_status = "";
-  int vibration_level = 0;
-  std::string manual_planname = ""; 
-  bool has_manual_plan = false;
-  bool wait_for_quake_off = false;
-  int num_digging_failures = 0;
-  bool current_digging_failed = false;
-
   // Determine which adaptation should be triggered
   if (has_manual_plan && manual_planname != "") // A manual plan from the Earth
   {
+    ROS_INFO_STREAM("[Analysis Node] Has a plan from the Earth control center");
     // The substring, "ManualPlan", in manual_planname, will make
     // the planner componenet to give an instruction to the execute
     // compoenent to run the manual plan.
@@ -240,6 +256,8 @@ void AdaptationAnalyzer::adaptation_analysis()
   {
     if (vibration_level == 1) // An earthquake is detected. 
     {
+      ROS_INFO_STREAM("[Analysis Node] A quake is detected. The vibration level is changed to 1");
+
       // Transition the lander to a safe mode
       wait_for_quake_off = !wait_for_quake_off; // change from false to true
       bool syn_plan = false;
@@ -248,16 +266,22 @@ void AdaptationAnalyzer::adaptation_analysis()
     }
     else if (terminate_current_task && has_new_task) // a new task is requsted to do instead of the current one
     {
+      ROS_INFO_STREAM("[Analysis Node] a new task is requested and the current task will be termianted.");
+ 
       bool syn_plan = true;
       initialize_task(syn_plan, terminate_current_task); 
     }
-    else if (num_digging_failures == 3) // the belief of models drops two low, such initialize the task
+    else if (num_digging_failures == 3) // the belief of models drops too low, such initialize the task
     {
+      ROS_INFO_STREAM("[Analysis Node] the belief of both models drops below a threshold. A model update request is issued.");
+ 
       bool syn_plan = true;
       initialize_task(syn_plan);
     }
     else if (num_digging_failures == 2) // the belief of models drops a little, update models and rtInfo
     {
+      ROS_INFO_STREAM("[Analysis Node] the belief of excavation probability model drops below a threshold. A model update request is issued.");
+ 
       transition_to_safe_pose();
 
       // Update Excavation-Probability Model and Runtime Info
@@ -271,6 +295,8 @@ void AdaptationAnalyzer::adaptation_analysis()
     }
     else if (current_digging_failed || has_arm_fault)
     {
+      ROS_INFO_STREAM("[Analysis Node] the digging fails while the belief of models are still ok. Update the runtime information by removing the current excavalocation.");
+ 
       transition_to_safe_pose();
 
       // FIXME: here is for excavaion sceanrio only
@@ -281,9 +307,18 @@ void AdaptationAnalyzer::adaptation_analysis()
 
       planning();
     }
-    // When a plan ends with "Complete_Success" status
-    else if (current_task_status=="Completed_Success" && has_new_task) 
+    // 1. start the first task
+    // 2. start the next task when current task is completed
+    else if (has_new_task && (current_task_name=="" || current_task_status=="Completed_Success")) 
     {
+      if (current_task_name=="")
+      {
+        ROS_INFO("[Analysis Node] Starts to do the first task for the mission");
+      }
+      else
+      {
+        ROS_INFO_STREAM("[Analysis Node] The current task is finished successfully. Starts to do a new task.");
+      }
       bool syn_plan = true;
       initialize_task(syn_plan);
     }
@@ -292,6 +327,7 @@ void AdaptationAnalyzer::adaptation_analysis()
   {
     if (vibration_level == 0) // the earthquake has gone
     {
+      ROS_INFO_STREAM("[Analysis Node] The quake has stopped. The vibration level comes back to the normal leve 0");
       // clear the waiting tag
       wait_for_quake_off = !wait_for_quake_off; // change from true to false
 

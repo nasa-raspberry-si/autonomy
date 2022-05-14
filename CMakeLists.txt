@@ -82,22 +82,22 @@ add_subdirectory(src)
 # Mark executable scripts (Python etc.) for installation
 # in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-   scripts/knowledge_maintenance.py
+   scripts/knowledge_management_node.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 catkin_install_python(PROGRAMS
-   scripts/fault_management.py
+   scripts/fault_management_node.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 catkin_install_python(PROGRAMS
-   scripts/task_planning.py
+   scripts/task_planning_node.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 catkin_install_python(PROGRAMS
-   scripts/plexil_plan_translator.py
+   scripts/plan_translation_node.py
    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

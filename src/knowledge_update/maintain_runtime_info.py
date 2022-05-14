@@ -22,15 +22,15 @@ import json
 class RuntimeInfoMaintenance():
     def __init__(
             self, task_name="", eval_root_dir="", model_names=["SciVal", "ExcaProb"],
-            debug=False):
+            debug=True):
+        self.debug = debug
         self.task_name = task_name
         self.model_names = model_names
-        self.loc_pool = gen_loc_pool()
-        self.debug = debug
+        self.loc_pool = self.gen_loc_pool()
         self.eval_root_dir=eval_root_dir
         self.runtime_info = {}
         self.runtime_info_fp = ""
-        self.model_update = None
+        self.model_updater = None
 
         self.extra_initialization()
 
@@ -39,15 +39,15 @@ class RuntimeInfoMaintenance():
     def extra_initialization(self):
         if (self.task_name!="") and (self.eval_root_dir!=""):
             # Check the doc at, doc/structure_of_evaluation_directory.txt
-            self.runtime_info_fp = self.eval_root_dir + "/Tasks/" + self.task_name + "rt_info.json" 
+            self.runtime_info_fp = self.eval_root_dir + "/Tasks/" + self.task_name + "/rt_info.json" 
             models_dir = self.eval_root_dir + "/Models"
             self.model_updater = ModelUpdater(models_dir, self.model_names)
-            loginfo("The RuntimeInfoMaintenence isntance is fully initialized")
+            loginfo("The RuntimeInfoMaintenence instance is fully initialized")
         else:
-            loginfo("The RuntimeInfoMaintenence isntance is not fully initialized due to")
+            loginfo("The RuntimeInfoMaintenence instance is not fully initialized due to")
             loginfo("\ttask_name: " + self.task_name)
             loginfo("\teval_root_dir: " + self.eval_root_dir)
-            loginfo("\tmodel_names: " + str(model_names))
+            loginfo("\tmodel_names: " + str(self.model_names))
 
 
     # FIXME:
@@ -56,7 +56,7 @@ class RuntimeInfoMaintenance():
     #   dump location from a reachable area (Issue 117 in ow_simulator repo).
     #   Issue 117: https://github.com/nasa/ow_simulator/issues/117
     # * The input paramters, x_gap and y_gap, controls the density coverage 
-    def gen_loc_pool(self, x_gap=0.2, y_gap=0.1, debug=True):
+    def gen_loc_pool(self, x_gap=0.2, y_gap=0.1):
         loc_pool = []
         y_steps = int(2/y_gap)
         for y_step in range(0, y_steps+1):
@@ -69,10 +69,10 @@ class RuntimeInfoMaintenance():
                 x = round(x_low + x_gap*x_step, 4)
                 loc_pool.append((x, y))
 
-        if debug:
+        if self.debug:
             loc_pool.sort(key = lambda x: x[1])
             loginfo("Number of locations in the pool: " + str(len(loc_pool)))
-            loginfo(loc_pool)
+            loginfo(str(loc_pool))
 
         return loc_pool
 
@@ -84,12 +84,15 @@ class RuntimeInfoMaintenance():
     def getSVs(self, num_of_locs):
         sci_vals = []
         for i in range(num_of_locs):
-            sci_vals.append(random.random())
+            sci_vals.append(round(random.random(), 4))
         return sci_vals
 
     def getExProb(self, sv):
         beta = self.model_updater.ExcaProb_beta
-        return 1-beta*sv
+        if isinstance(sv, list):
+            return [round(prob, 4) for prob in (1-beta*sv)]
+        else:
+            return round(1-beta*sv, 4)
        
     # API for user
     # FIXME: currently only consider the excavation scenario
@@ -104,9 +107,9 @@ class RuntimeInfoMaintenance():
         dloc_list = locs[xloc_num:]
 
         if self.debug:
-            loginfo("\nList of " + str(xloc_num) + " excavation locations:")
+            loginfo("List of " + str(xloc_num) + " excavation locations:")
             loginfo(xloc_list)
-            loginfo("\nList of " + str(dloc_num) + " dump locations:")
+            loginfo("List of " + str(dloc_num) + " dump locations:")
             loginfo(dloc_list)
             '''
             loginfo("\nCreating a scatter plot for excavation and dump locations.\n")

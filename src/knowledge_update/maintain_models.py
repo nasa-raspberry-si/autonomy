@@ -26,7 +26,7 @@ class ModelUpdater():
         f.write(content)
         f.close()
 
-    def updateScienceValueModel(self):
+    def updateScienceValueModel(self,fp):
         # a string of datetime containing current date and time
         now_str = datetime.now().isoformat()
         content = now_str + " | Updated\n"
@@ -35,22 +35,22 @@ class ModelUpdater():
 
     # randomly draw the beta value from [0.3, 0.5].
     # The range has no special meaning.
-    def updateExcaProbModel(self):
-        self.beta = 0.3 + 0.2 * random.random()
+    def updateExcaProbModel(self, fp):
+        self.ExcaProb_beta = 0.3 + 0.2 * random.random()
 
         # a string of datetime containing current date and time
         now_str = datetime.now().isoformat()
-        content = now_str + " | beta:" + str(beta) + "\n"
+        content = now_str + " | ExcaProb_beta:" + str(self.ExcaProb_beta) + "\n"
         self.writeToFile(fp, content)
-        loginfo("Excavation-Probability Model Updated: beta value now is {}".format(beta))
+        loginfo("Excavation-Probability Model Updated: ExcaProb_beta value now is {}".format(self.ExcaProb_beta))
 
     def updateModel(self, model_name):
         success = True
         fp = self.models_dir + "/" + model_name + ".model"
         if model_name == "SciVal":
-            self.updateScienceValueModel()
+            self.updateScienceValueModel(fp)
         elif model_name == "ExcaProb":
-            self.updateExcaProbModel()
+            self.updateExcaProbModel(fp)
         else:
             loginfo("Unsupported model: {}".format(model_name))
             msg = "Currently supported models:"

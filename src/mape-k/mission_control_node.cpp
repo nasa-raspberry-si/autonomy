@@ -8,11 +8,21 @@
 
 char *eval_root_dir = getenv("EVALUATION_ROOT_DIR");
 
+void check_input_parameters(int argc, char* argv[])
+{
+  for(int i=0; i<argc; i++)
+  {
+    ROS_INFO("Argument %d: %s", i, argv[i]);
+  }
+}
+
 int main(int argc, char* argv[])
 {
-  std::string mission_spec_filename = "None"; 
+  check_input_parameters(argc, argv);
 
-  if (argc==2 && std::string(argv[1]).compare("None") != 0)
+  std::string mission_spec_filename = "None"; 
+  
+  if (argc>=2 && std::string(argv[1]).compare("None") != 0)
   {
     mission_spec_filename = std::string(argv[1]);
   }
@@ -36,6 +46,10 @@ int main(int argc, char* argv[])
   ROS_INFO("[Mission Control Node] the evaluation root dir: %s", eval_root_dir);
 
   MissionController mission_controller(&nh, std::string(eval_root_dir));
+
+  // Wait 2 seconds for all nodes and services to be initialized
+  ros::Duration(2).sleep(); 
+
   // Load the mission specification and start to run the first task
   std::string mission_spec_fp = std::string(eval_root_dir) + "/"+ std::string(mission_spec_filename);
   mission_controller.load_mission_spec(mission_spec_fp);

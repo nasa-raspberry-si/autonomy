@@ -48,21 +48,30 @@ void MissionController::load_mission_spec(std::string mission_spec_fp)
   std::string line;
  
   ROS_INFO("[Mission Control Node] Loading mission specification: %s", mission_spec_fp.c_str());
+  int task_idx=0;
 
   while (std::getline(infile, line))
   {
+    task_idx += 1;
     std::string delimiter = "|";
     std::size_t pos = line.find(delimiter); // pos is 0-based index
     std::string task_name = line.substr(5, pos-5); // "Task:" has a length of 5
     std::string task_aux_info = line.substr(pos+10); // "Aux_Info:" has a length of 9
     task_names_list.push_back(task_name);
     mission_spec.insert( std::pair<std::string,std::string>(task_name, task_aux_info) ); 
-    ROS_INFO("\ttask: %s, aux_info: %s", task_name.c_str(), task_aux_info.c_str());
+
+    ROS_INFO_STREAM("\t ID: " << std::to_string(task_idx)
+                              << "\t Task_Name: " << task_name
+                              << "\t Aux_Info: " <<  task_aux_info);
   }
+
+  ROS_INFO("[Mission Control Node] Finish loading mission specification.");
 }
 
 void MissionController::prepare_new_task_to_run()
 {
+  ROS_INFO("[Mission Control Node] starts to preparing a new task to run");
+
   current_task_idx += 1;
   std::string task_name = task_names_list[current_task_idx];
   std::string aux_info = mission_spec[task_name];
@@ -73,6 +82,11 @@ void MissionController::prepare_new_task_to_run()
  
   if (is_successful)
   {
+    ROS_INFO_STREAM("[Mission Control Node] successfully prepared for task "
+                    << std::to_string(current_task_idx)
+                    << "\n\ttask_name: " << task_name
+                    << "\n\taux_info: " << aux_info);
+
     current_task = Task(task_name, status, aux_info);
     // Create a NextTask message and send it to the analysis componenet
     rs_autonomy::NextTask new_task;
@@ -80,6 +94,7 @@ void MissionController::prepare_new_task_to_run()
     new_task.aux_info = aux_info;
     new_task.model_names = model_names;
     new_task.terminate_current_task = false;
+    ROS_INFO("[Mission Control Node] publishing the new task to '/Mission/NextTask'");
     new_task_pub.publish(new_task);
     current_task.status = "Sent";
   }

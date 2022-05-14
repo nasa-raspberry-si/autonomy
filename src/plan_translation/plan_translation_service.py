@@ -1,8 +1,4 @@
-#!/usr/bin/env python
-
-from __future__ import print_function
-
-import os
+import json
 from subprocess import Popen, PIPE
 
 import rospy
@@ -13,28 +9,25 @@ from rs_autonomy.srv import PlanTranslation, PlanTranslationResponse
 # PLEXIL plan translation
 from plan_translation.plexil_plan_translator import PlexilPlanTranslator
 
-# Environment Variables
-# 1 Assist loading run-time info file and dumping synthesized PLEXIL plan to a file
-evaluation_root_dir = os.environ("EVALUATION_ROOT_DIR")
-# 2 Assist compiling C++-like '#include' headers in synthesized PLEXIL plan (*.plp)
-#   ow_simulator : '#include "plan-interface.h"'
-#   owlat        : '#include "owlat-interface.h"'
-ow_plexil_lib_source_dir = os.environ("OW_PLEXIL_LIB_SOURCE_DIR")
-# 3 Assist moving the compiled PLEXIL plan (*.plx) to the destination
-plexil_lib_compiled_plan_dir = os.environ("PLEXIL_LIB_COMPILED_PLAN_DIR")
 
-class PlanTranslation:
-    def __init__(self):
-        translation_service = rospy.Service(
+class PlanTranslationService:
+    def __init__(self, evaluation_root_dir, ow_plexil_lib_source_dir, plexil_lib_compiled_plan_dir):
+        self.evaluation_root_dir = evaluation_root_dir
+        self.ow_plexil_lib_source_dir = ow_plexil_lib_source_dir
+        self.plexil_lib_compiled_plan_dir = plexil_lib_compiled_plan_dir
+
+        self.translation_service = rospy.Service(
                 '/plan_translation',
                 PlanTranslation,
                 self.callback_plan_translation)
+        rospy.loginfo("[Plan Translation Node] service '/plan_translation' is ready")
+
 
     def __translation(self, task_name, plan_name, high_level_plan):
         # Step 1
         # * Load runtime info file
         loginfo("[Plan Translation - Step 1] Loading the run-time information for plan translation.")
-        task_dir = evaluation_root_dir + "/" + task_name
+        task_dir = self.evaluation_root_dir + "/Tasks/" + task_name
         current_plan_dir = task_dir + "/" + plan_name
         rt_info_fp = current_plan_dir + "/" + "rt_info.json"
         runtime_info = {}
@@ -60,14 +53,13 @@ class PlanTranslation:
         plan_filename = plan_name + ".plp"
         plan_fp = current_plan_dir + "/" + plan_filename 
         loginfo("[Plan Translation - Step 3] Compiling the PLEXIL plan file " + plan_filename)
-        cmd_plan_compilation = "plexilc -I " + ow_plexil_lib_source_dir + " -O " + plexil_lib_compiled_plan_dir + plan_fp 
-        loginfo("CMD To Run: " + cmd_plan_translation)
+        cmd_plan_compilation = "plexilc -I " + self.ow_plexil_lib_source_dir + " -O " + self.plexil_lib_compiled_plan_dir + " " + plan_fp 
+        loginfo("CMD To Run: " + cmd_plan_compilation)
         p_pe = Popen(cmd_plan_compilation, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p_pe.communicate()
 
 
     def callback_plan_translation(self, req):
-    {
         task_name = req.task_name
         plan_name = req.plan_name
         high_level_plan = req.high_level_plan
@@ -81,18 +73,3 @@ class PlanTranslation:
             success = False
 
         return PlanTranslationResponse(success)
-    }
-
-
-
-def plan_translation():
-    rospy.init_node('plan_translation_node')
-
-    plan_translator = PlanTranslation()
-
-    rospy.loginfo("Ready to provide PLEXIL plan translation service")
-    rospy.spin()
-
-
-if __name__ == "__main__":
-    plan_translation()
