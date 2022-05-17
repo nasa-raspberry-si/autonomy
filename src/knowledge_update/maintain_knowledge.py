@@ -58,10 +58,10 @@ class KnowledgeManagementService:
                 num_xloc, num_dloc = int(temp[0]), int(temp[1])
                 result = self.rfInfoMaintainer.initialize_rt_info(num_xloc, num_dloc)
             elif req.action=="Update":
-                model_names = req.aux_info.split[","]
+                model_names = req.aux_info.split(",")
                 result = self.rfInfoMaintainer.update_rt_info(model_names)
             elif req.action=="Remove":
-                items_to_remove = req.aux_info.split[","]
+                items_to_remove = req.aux_info.split(",")
                 result = self.rfInfoMaintainer.remove_loc(items_to_remove)
             else:
                 loginfo("Unknown update action for runtime info: {}".format(argv[1])) 

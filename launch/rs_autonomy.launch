@@ -13,10 +13,14 @@
 	owlat        : '#include "owlat-interface.h"'
   3 PLEXIL_LIB_COMPILED_PLAN_DIR
 	assists moving the compiled PLEXIL plan (*.plx) to the destination
+  4 DEBUG_MODE
+    if this environment is set to "true", the rs_autonomy will run in the debug mode
+    otherwise, rs_autonomy will not run in the debug mode
   -->
   <env name="EVALUATION_ROOT_DIR" value="$(optenv EVALUATION_ROOT_DIR)"/>
   <env name="OW_PLEXIL_LIB_SOURCE_DIR" value="$(optenv OW_PLEXIL_LIB_SOURCE_DIR)"/>
   <env name="PLEXIL_LIB_COMPILED_PLAN_DIR" value="$(optenv PLEXIL_LIB_COMPILED_PLAN_DIR)"/>
+  <env name="DEBUG_MODE" value="$(optenv DEBUG_MODE)" />
 
 
   <node pkg="rs_autonomy"

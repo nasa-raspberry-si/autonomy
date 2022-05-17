@@ -46,8 +46,13 @@
 //        this function needs to be updated accordingly
 class AdaptationAnalyzer {
   public:
-    AdaptationAnalyzer(ros::NodeHandle *nh)
+    AdaptationAnalyzer(ros::NodeHandle *nh, bool is_debug=false)
     {
+      terminating_current_plan = false;
+      clearing_arm_fault = false;
+
+      this->is_debug = is_debug;
+
       // Publisher for sending adaptation commands to the planner component
       adpt_inst_pub = nh->advertise<rs_autonomy::AdaptationInstruction>(
  		      "/Analysis/AdaptationInstruction", msg_queue_size);
@@ -178,6 +183,12 @@ class AdaptationAnalyzer {
     ros::Subscriber vibration_level_sub;
     ros::Subscriber earth_inst_sub;
     ros::Subscriber high_level_plan_sub; 
+    
+    // The following two variables are used to safe-guard the adaptation_analysis()
+    bool terminating_current_plan;
+    bool clearing_arm_fault;
+
+    bool is_debug;
 };
 
 

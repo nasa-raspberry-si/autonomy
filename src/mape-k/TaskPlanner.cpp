@@ -20,13 +20,6 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
       planner_instruction.plan_name = current_plan_name;
       planner_instruction.aux_info = "";
     }
-    else if (command == "Unstow") // send a PLEXIL plan for unstowing the arm
-    {
-      planner_instruction.task_name = task_name;
-      planner_instruction.command = "ADD";
-      planner_instruction.plan_name = "Unstow";
-      planner_instruction.aux_info = "";
-    }
     else if (command.find("ManualPlan") != std::string::npos)
     {
       planner_instruction.task_name = task_name;
@@ -42,7 +35,7 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
       }
       else
       {
-	task_name = adpt_inst.task_name;
+	    task_name = adpt_inst.task_name;
         current_plan_id = 1; // frist plan for the new task
       }
       current_plan_name = task_name + "Plan" + std::to_string(current_plan_id);
@@ -51,19 +44,21 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
 
       if (task_planning_service_client.call(task_planning))
       {
-        ROS_INFO_STREAM("[Planner Node] high-level plan is " << task_planning.response.high_level_plan);
+        // FIXME: disable the message
+        // the high-level plan here contains the keys of locations, but not their names
+        ROS_INFO_STREAM("[Planner Node] high-level plan (keys but not loc names) is " << task_planning.response.high_level_plan);
         planner_instruction.task_name = task_name;
         planner_instruction.command = "ADD";
         planner_instruction.plan_name = current_plan_name;
         planner_instruction.aux_info = task_planning.response.high_level_plan;
-	rs_autonomy::HighLevelPlan hlp_msg;
-	hlp_msg.plan = task_planning.response.high_level_plan;
-	high_level_plan_pub.publish(hlp_msg);
+        rs_autonomy::HighLevelPlan hlp_msg;
+        hlp_msg.plan = task_planning.response.high_level_plan;
+        high_level_plan_pub.publish(hlp_msg);
       }
       else
       {
         // FIXME: notify the failure to the analysis componenet
-	ROS_ERROR("[Planner Node] unable to talk to /task_planning service. Planning fails.");
+	    ROS_ERROR("[Planner Node] unable to talk to /task_planning service. Planning fails.");
       }
     }
     else
@@ -78,7 +73,7 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
       this->planner_inst_pub.publish(this->planner_instruction);
 
       ROS_INFO_STREAM(
-        "[Planner Node] send a planner instruction for the current task: "
+        "[Planner Node] sending a planner instruction for the current task: "
         << "\n\ttask_name:" << this->planner_instruction.task_name
         << "\n\tcommand: " << this->planner_instruction.command
         << "\n\tplan_name:" << this->planner_instruction.plan_name

@@ -12,12 +12,16 @@ void SysEnvMonitor::callback_arm_fault_status(const ow_faults::ArmFaults::ConstP
 
 void SysEnvMonitor::callback_current_plan(const ow_plexil::CurrentPlan current_plan)
 {
+  ROS_INFO("[Monitor Node] the current plan %s, status: %s", current_plan.plan_name.c_str(), current_plan.plan_status.c_str());
+
   current_plan_pub.publish(current_plan);
 }
 
 void SysEnvMonitor::callback_current_op(const ow_plexil::CurrentOperation current_op)
 {
-  current_plan_pub.publish(current_op);
+  ROS_INFO("[Monitor Node] the current operation %s, status: %s", current_op.op_name.c_str(), current_op.op_status.c_str());
+
+  current_op_pub.publish(current_op);
 }
 
 void SysEnvMonitor::callback_vibration_level(const rs_autonomy::VibrationLevel vl)

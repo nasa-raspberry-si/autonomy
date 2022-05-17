@@ -16,6 +16,8 @@ class PlanTranslationService:
         self.ow_plexil_lib_source_dir = ow_plexil_lib_source_dir
         self.plexil_lib_compiled_plan_dir = plexil_lib_compiled_plan_dir
 
+        self.plexil_plan_translator = PlexilPlanTranslator()
+
         self.translation_service = rospy.Service(
                 '/plan_translation',
                 PlanTranslation,
@@ -38,8 +40,8 @@ class PlanTranslationService:
         # * Parse the high-level plan
         # * Call PLEXIL plan translation utility
         loginfo("[Plan Translation - Step 2] High-level plan parsing and PLEXIL plan writeup.")
-        plexil_plan_translator = PlexilPlanTranslator()
-        plexil_plan_translator.translate(
+        
+        self.plexil_plan_translator.translate(
                 task_name,
                 runtime_info,
                 plan_name,

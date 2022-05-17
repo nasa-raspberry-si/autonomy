@@ -4,7 +4,10 @@
 
 void AdaptationAnalyzer::callback_current_plan(const ow_plexil::CurrentPlan current_plan)
 {
-  ROS_INFO_STREAM("[Analysis Node] the current plan, " << current_plan.plan_name << ", status: " << current_plan.plan_status);
+  if (is_debug)
+  {
+    ROS_INFO_STREAM("[Analysis Node] the current plan, " << current_plan.plan_name << ", status: " << current_plan.plan_status);
+  }
   plan_name = current_plan.plan_name;
   plan_status = current_plan.plan_status;
 
@@ -12,11 +15,33 @@ void AdaptationAnalyzer::callback_current_plan(const ow_plexil::CurrentPlan curr
   {
     current_task_status = "Completed_Success";
   }
+  else if (plan_status == "Terminated")
+  {
+    terminating_current_plan = false;
+  }
+
+}
+
+void AdaptationAnalyzer::callback_current_operation(const ow_plexil::CurrentOperation current_op)
+{
+  if (is_debug)
+  {
+    ROS_INFO("[Analysis Node] the current operation %s, status: %s", current_op.op_name.c_str(), current_op.op_status.c_str());
+  }
+  current_op_name = current_op.op_name;
+  current_op_status = current_op.op_status;
+  update_local_vars();
 }
 
 void AdaptationAnalyzer::callback_high_level_plan(const rs_autonomy::HighLevelPlan msg)
 {
-  ROS_INFO_STREAM("[Analysis Node] the synthesized high-level plan, " << msg.plan);
+  // FIXME:
+  // The location IDs published in this topic are actually keys in the runtime
+  // information dictionary.
+  // Their actuall location names are stored in the attribute, 'name', in each
+  // location in the runtime information dictionary.
+  // Will disable the message out.
+  ROS_INFO_STREAM("[Analysis Node] the synthesized high-level plan (loc info are keys in runtime info dictionary, actual names can be found in the runtime info dictionary): " << msg.plan);
   // For excavation scenario:
   //   - The high-level plan for excavation scenario has the format as
   //     "[excavation_loc_ID,dump_loc_ID]"
@@ -37,17 +62,31 @@ void AdaptationAnalyzer::callback_next_task(const rs_autonomy::NextTask next_tas
 
 void AdaptationAnalyzer::callback_arm_fault_status(const rs_autonomy::ArmFault arm_fault)
 {
-  ROS_INFO_STREAM("[Analysis Node] a change of arm fault status is notified");
+  ROS_INFO_STREAM("[Analysis Node] a change of arm fault status is notified. Is there an arm fault: " + std::to_string(arm_fault.has_a_fault));
   has_arm_fault = arm_fault.has_a_fault;
-  plan_status = "StopByArmFault";
-  update_local_vars();
-}
-
-void AdaptationAnalyzer::callback_current_operation(const ow_plexil::CurrentOperation current_op)
-{
-  ROS_INFO("[Analysis Node] the current operation %s, status: %s", current_op.op_name.c_str(), current_op.op_status.c_str());
-  current_op_name = current_op.op_name;
-  current_op_status = current_op.op_status;
+  if(has_arm_fault)
+  {
+    plan_status = "StopByArmFault";
+  }
+  else
+  {
+    int timepassed = 0;
+    int waittime = 30; // maximum waiting time 30 seconds
+    ros::Rate rate(10);
+    while(timepassed < waittime)
+    {
+      ros::spinOnce();
+      rate.sleep();
+      timepassed+=1;
+      if(timepassed % 10 == 0)
+      {
+        ROS_INFO("[Analysis Node] waiting for the arm fault clear signal to be fully reflected in the lander system in %i seconds", (waittime/10 - timepassed/10));
+      }
+    }
+    // The previous arm fault has been cleared.
+    // The status of arm fault changes from true to false
+    clearing_arm_fault = false;
+  }
   update_local_vars();
 }
 
@@ -153,16 +192,37 @@ void AdaptationAnalyzer::initialize_rtInfo()
   maintain_rtInfo(action, current_task_aux_info);
 }
 
-// Transition the lander to a safey pose (Unstow pose) with arm fault cleared
+// Terminating the current plan and clear the arm fault if it exists
 void AdaptationAnalyzer::transition_to_safe_pose()
 {
   ROS_INFO_STREAM("[Analysis Node] Transitioning the arm to a safe pose");
-  adpt_inst.adaptation_commands = { "TerminatePlan", "Unstow"};
+
+  adpt_inst.adaptation_commands = { "TerminatePlan"};
+  terminating_current_plan = true;
+
   if (has_arm_fault)
   {
-    // Assume that before Unstow operation, the arm fault has been cleared
-    adpt_inst.adaptation_commands = { "TerminatePlan", "ClearArmFault", "Unstow"};
+    adpt_inst.adaptation_commands.push_back("ClearArmFault");
+    // Due to some bug in the fault handling in ow_simulator,
+    // wait for current plan to finish with a status of Completed_FAILURE
+    // such that PLEXIL executive could be ready for following plans.
+    int timepassed = 0;
+    int waittime = 600; // maximum waiting time 60 seconds
+    ros::Rate rate(10);
+    while((plan_status!= "Completed_Failure") && (timepassed < waittime))
+    {
+      ros::spinOnce();
+      rate.sleep();
+      timepassed+=1;
+      if(timepassed % 50 == 0)
+      {
+        ROS_INFO("[Analysis Node] waiting the arm-fault-interrupted current plan to finish in %i seconds", (waittime/10 - timepassed/10));
+      }
+    }
+
+	clearing_arm_fault = true;
   }
+
   adpt_inst.task_name = current_task_name;
   adpt_inst_pub.publish(adpt_inst);
 }
@@ -237,6 +297,16 @@ void AdaptationAnalyzer::initialize_task(bool syn_plan, bool terminate_current_t
 
 void AdaptationAnalyzer::adaptation_analysis()
 {
+  if (terminating_current_plan || clearing_arm_fault)
+  {
+    return;
+  }
+
+  // Start adaptation analysis when
+  // the lander is ready: not clearing_arm_fault
+  // the PLEXIL executive is ready: not terminating_current_plan. That is,
+  //   the PLEXIL executive finishes with the current plan
+
   // Determine which adaptation should be triggered
   if (has_manual_plan && manual_planname != "") // A manual plan from the Earth
   {
@@ -301,8 +371,10 @@ void AdaptationAnalyzer::adaptation_analysis()
 
       // FIXME: here is for excavaion sceanrio only
       std::size_t pos = plan_aux_info.find(","); // pos is the location of first, ","
-      std::string aux_info = plan_aux_info.substr(pos); // the ID of excavation location
+      std::string aux_info = plan_aux_info.substr(7, pos-7); // the ID of excavation location
       std::string action = "Remove";
+      ROS_INFO_STREAM("[Analysis Node] plan_aux_info for Remove action: " + plan_aux_info); 
+      ROS_INFO_STREAM("[Analysis Node] aux_info for Remove action: " + aux_info);
       maintain_rtInfo(action, aux_info);
 
       planning();

@@ -54,7 +54,7 @@ class SysEnvMonitor {
     		      &SysEnvMonitor::callback_current_op,
     		      this);
       current_plan_sub = nh->subscribe<ow_plexil::CurrentPlan>(
-    		      "/current_plan_status",
+    		      "/CurrentPlan",
     		      msg_queue_size,
     		      &SysEnvMonitor::callback_current_plan,
     		      this);

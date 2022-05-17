@@ -7,6 +7,7 @@
 #include <string>
 
 char *eval_root_dir = getenv("EVALUATION_ROOT_DIR");
+char *is_debug_str = getenv("DEBUG_MODE");
 
 void check_input_parameters(int argc, char* argv[])
 {
@@ -45,6 +46,11 @@ int main(int argc, char* argv[])
   ROS_INFO("[Mission Control Node] the mission specification filename: %s", mission_spec_filename.c_str());
   ROS_INFO("[Mission Control Node] the evaluation root dir: %s", eval_root_dir);
 
+  bool is_debug = false;
+  if ((is_debug_str!=NULL) && (std::string(is_debug_str) == "true"))
+  {
+	is_debug = true;
+  }
   MissionController mission_controller(&nh, std::string(eval_root_dir));
 
   // Wait 2 seconds for all nodes and services to be initialized

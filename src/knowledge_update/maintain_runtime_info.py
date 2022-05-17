@@ -217,12 +217,23 @@ class RuntimeInfoMaintenance():
         success = True
         for item in items_to_remove:
             if item in self.runtime_info['xloc_list']:
-                self.runtime_info['xloc_list'].remove(item)
-            elif item in self.runtime_info['dloc_list']:
-                self.runtime_info['xloc_list'].remove(item)
+                del self.runtime_info['xloc_list'][item]
             else:
-                loginfo("Item ({}) doesn't exist in the runtime info".format(item))
+                loginfo("Item ({}) is not an excavation location".format(item))
                 success = False
+
+        # Rename location keys in the runtime_info dict due to the naming of 
+        # excavation locations in the automatic generation of a PRISM model.
+        # If there is 6 excavation locations, the variables' names are:
+        # xloc1, xloc2, ..., xloc6
+        xloc_list = self.runtime_info['xloc_list']
+        self.runtime_info['xloc_list'] = {}
+        num_xloc = len(xloc_list)
+        xloc_idx = 1
+        for key in xloc_list:
+            new_key = "xloc" + str(xloc_idx)
+            self.runtime_info['xloc_list'][new_key] = xloc_list[key]
+            xloc_idx += 1
 
         with open(self.runtime_info_fp, "w") as outfile: 
             json.dump(self.runtime_info, outfile)

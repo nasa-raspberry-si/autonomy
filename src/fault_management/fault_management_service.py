@@ -12,13 +12,22 @@ class FaultManagementService:
         self.faults_config_client = dynamic_reconfigure.client.Client('/faults')
 
         self.arm_faults_vars_dict = {
-            1: "dist_pitch_joint_locked_failure",
-            2: "hand_yaw_joint_locked_failure",
-            3: "prox_pitch_joint_locked_failure",
-            4: "scoop_yaw_joint_locked_failure",
-            5: "shou_pitch_joint_locked_failure",
-            6: "shou_yaw_joint_locked_failure"
+        1: "dist_pitch_effort_failure",
+        2: "hand_yaw_effort_failure",
+        3: "prox_pitch_effort_failure",
+        4: "scoop_yaw_effort_failure",
+        5: "shou_pitch_effort_failure",
+        6: "shou_yaw_effort_failure"
         }
+
+        #    ow_simulator Release 9
+        #    1: "dist_pitch_joint_locked_failure",
+        #    2: "hand_yaw_joint_locked_failure",
+        #    3: "prox_pitch_joint_locked_failure",
+        #    4: "scoop_yaw_joint_locked_failure",
+        #    5: "shou_pitch_joint_locked_failure",
+        #    6: "shou_yaw_joint_locked_failure"
+        #}
 
         self.fm_service = rospy.Service(
             '/arm_fault_management',
@@ -27,10 +36,11 @@ class FaultManagementService:
         rospy.loginfo("[Fault Management Node] service '/arm_fault_management' is ready")
 
 
-    def set_parameter_arm_fault_config(self, arm_fault_var_ids, values):
+    def set_parameter_arm_fault_config(self, arm_fault_var_ids, fault_values):
         params = {}
-        for idx in arm_fault_var_ids:
-            params[self.arm_faults_vars_dict[idx]] = values[idx]
+
+        for fault_id, fault_value in zip(arm_fault_var_ids, fault_values):
+            params[fault_id] = fault_value
         return params
 
     def callback_arm_fault_management(self, req):

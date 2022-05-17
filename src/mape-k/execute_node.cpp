@@ -16,11 +16,14 @@ int main(int argc, char* argv[])
 
   TaskExecutor task_executor(&nh);
 
+  task_executor.handle_exec_commands();
+  /*
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {
     ros::spinOnce();
     rate.sleep();
   }
+  */
 
   return 0;  // We never actually get here!
 }

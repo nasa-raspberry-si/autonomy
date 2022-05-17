@@ -4,6 +4,7 @@
 
 #include "AdaptationAnalyzer.h"
 
+char *is_debug_str = getenv("DEBUG_MODE");
 
 int main(int argc, char* argv[])
 {
@@ -12,8 +13,12 @@ int main(int argc, char* argv[])
   ros::init(argc, argv, "analysis_node");
 
   ros::NodeHandle nh;
-
-  AdaptationAnalyzer adaptation_analyzer(&nh);
+  bool is_debug = false;
+  if ((is_debug_str!=NULL) && (std::string(is_debug_str))=="true")
+  {
+	is_debug = true;
+  }
+  AdaptationAnalyzer adaptation_analyzer(&nh, is_debug);
 
   ros::Rate rate(1); // 1 Hz seems appropriate, for now.
   while (ros::ok()) {
