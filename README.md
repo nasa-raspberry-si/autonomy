@@ -40,10 +40,10 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
    - Knowledge Node and other service nodes
       * autonomy/script
    - Python packages for support services in autonomy/src
-      * acknowledgement management (for knowledge node)
-      * prism planning
-      * plan translation
-      * fault management
+      * acknowledgement management (for knowledge node): maintain machine learning models and task-dependent runtime information.
+      * prism planning: given some runtime info, automatically generate a PRISM model for a task and use it to get policy and actions
+      * plan translation: based on the actions (i.e., high-level plan), generate a PLEXIL plan using a task-related template and then compile it
+      * fault management: a ROS server to inject and clear arm fault in ow_simulator
    - The organization of evaluation directory
       * An example of directory structure: autonomy/evaluation
       * For detailed description, please refer to autonomy/doc/structure_of_evaluation_directory.txt
