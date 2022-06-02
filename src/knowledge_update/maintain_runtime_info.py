@@ -56,6 +56,7 @@ class RuntimeInfoMaintenance():
     #   dump location from a reachable area (Issue 117 in ow_simulator repo).
     #   Issue 117: https://github.com/nasa/ow_simulator/issues/117
     # * The input paramters, x_gap and y_gap, controls the density coverage 
+    # * The default values of x_gap and y_gap result into a pool of 48 locations
     def gen_loc_pool(self, x_gap=0.2, y_gap=0.1):
         loc_pool = []
         y_steps = int(2/y_gap)
@@ -161,8 +162,10 @@ class RuntimeInfoMaintenance():
     def update_rt_info(self, model_names):
         success = True
         if len(model_names) == len(self.model_names):
-            xloc_num = len(self.runtime_info['xloc_list'])
-            dloc_num = len(self.runtime_info['dloc_list'])
+            # xloc_num = len(self.runtime_info['xloc_list'])
+            # dloc_num = len(self.runtime_info['dloc_list'])
+            xloc_num = random.randint(8, 16)
+            dloc_num = random.randint(3, 6)
             # re-initialize the runtime info while keeping the numbers of locations
             success = self.initialize_rt_info(xloc_num, dloc_num)
         else:
@@ -182,7 +185,7 @@ class RuntimeInfoMaintenance():
     def update_rt_info_per_model(self, model_name):
         success = True
         if model_name == "SciVal":
-            self.update_rt_info_usning_SciVal()
+            self.update_rt_info_using_SciVal()
         elif model_name == "ExcaProb":
             self.update_rt_info_using_ExcaProb()
         else:
@@ -195,8 +198,9 @@ class RuntimeInfoMaintenance():
         return success
 
     def update_rt_info_using_ExcaProb(self):
-        for xloc in self.runtime_info['xloc_list']:
-            xloc['ex_prob'] = self.getExProb(xloc['sci_val'])
+        for xloc_key in self.runtime_info['xloc_list']:
+            self.runtime_info['xloc_list'][xloc_key]['ex_prob'] = self.getExProb(
+                self.runtime_info['xloc_list'][xloc_key]['sci_val'])
         
 
     def update_rt_info_using_SciVal(self):
@@ -208,9 +212,9 @@ class RuntimeInfoMaintenance():
         # update the excavation probability
         ex_probs = self.getExProb(sci_vals)
 
-        for xloc, idx in zip(xloc_list, range(xloc_num)):
-            xloc['sci_val'] = sci_vals[idx]
-            xloc['ex_prob'] = ex_probs[idx]
+        for xloc_key, idx in zip(xloc_list, range(xloc_num)):
+            xloc_list[xloc_key]['sci_val'] = sci_vals[idx]
+            xloc_list[xloc_key]['ex_prob'] = ex_probs[idx]
  
     # API for user
     def remove_loc(self, items_to_remove):

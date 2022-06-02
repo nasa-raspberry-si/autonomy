@@ -206,14 +206,18 @@ void AdaptationAnalyzer::initialize_rtInfo()
 void AdaptationAnalyzer::clear_arm_fault()
 {
   // Due to some bug in the fault handling in ow_simulator, when there is an effective
-  // arm fault, wait for current plan to finish with a status of Completed_Failure
-  // such that PLEXIL executive could be ready for following plans.
+  // arm fault, it will take some time for the corresponding ROS action to finish in the 
+  // ABORTED state such that PLEXIL executive could be ready for following plans.
+  //
+  // In current excavation scenario (the excavation plan template):
+  //   * The ABORTED state of either GuardedMove and Grind will cause the current plan to finish with a status of Completed_Failure
+  //   * The ABORTED state of DigCircular will not cause the plan to fail immediately because a Deliver action follows it. So, autonomy will send a TerminatePlan signal at the time.
   // 
   // Here, it is assumed that the SUT will stop and cause the PLEXIL plan to fail
   // when an arm fault is detected.
 
   int timepassed = 0;
-  int waittime = 600; // maximum waiting time 60 seconds
+  int waittime = 900; // maximum waiting time 90 seconds
   ros::Rate rate(10);
   while((plan_status!= "Completed_Failure") && (timepassed < waittime))
   {
@@ -364,6 +368,10 @@ void AdaptationAnalyzer::adaptation_analysis()
       terminate_current_plan();
 
       // Update Excavation-Probability Model and Science-value Model
+      // It will regenerate the entire runtime information with a randomly chosen
+      // number of excavation locations ([8, 16]) and the number of dump locations
+      // ([3, 6]) since all models will be updated and lists of appropriate locations
+      // for excavation and dumpping will be changed.
       std::vector<std::string> model_names = {"ExcaProb", "SciVal"};
       update_models(model_names);
       // Update Runtime info
@@ -382,8 +390,14 @@ void AdaptationAnalyzer::adaptation_analysis()
       ROS_INFO_STREAM("[Analysis Node] digging fails twice. The belief of the ExcaProb model drops too much. It needs to be updated.");
  
       terminate_current_plan();
+      
+      // Remove the location where excavation just failed.
+      std::size_t pos = plan_aux_info.find(","); // pos is the location of first, ","
+      std::string aux_info = plan_aux_info.substr(7, pos-7); // the ID of excavation location
+      std::string action = "Remove";
+      maintain_rtInfo(action, aux_info);
 
-      // Update Excavation-Probability Model and Runtime Info
+      // Update Excavation-Probability Model and Runtime Info for the left excavation locations
       std::vector<std::string> model_names = {"ExcaProb"};
       update_models(model_names);
       std::string action = "Update";
@@ -405,8 +419,8 @@ void AdaptationAnalyzer::adaptation_analysis()
       std::size_t pos = plan_aux_info.find(","); // pos is the location of first, ","
       std::string aux_info = plan_aux_info.substr(7, pos-7); // the ID of excavation location
       std::string action = "Remove";
-      ROS_INFO_STREAM("[Analysis Node] plan_aux_info for Remove action: " + plan_aux_info); 
-      ROS_INFO_STREAM("[Analysis Node] aux_info for Remove action: " + aux_info);
+      // ROS_INFO_STREAM("[Analysis Node] plan_aux_info for Remove action: " + plan_aux_info); 
+      // ROS_INFO_STREAM("[Analysis Node] aux_info for Remove action: " + aux_info);
       maintain_rtInfo(action, aux_info);
 
       planning();
