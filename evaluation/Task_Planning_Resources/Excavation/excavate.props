@@ -1,10 +1,3 @@
-const int C1;
+multi(Pmax=? [ F "done" ], R{"SV"}max=? [ C ], R{"T"}min=? [ C ])
 
-multi(Pmax=? [ F "done" ], R{"SV"}max=? [ C ])
-
-R{"EC"}<=500 [ C ]
-
-multi(Pmax=? [ F "done" ], R{"EC"}min=? [ C ])
-
-multi(R{"T"}min=? [ C ], R{"EC"}min=? [ C ])
-
+R{"EC"}<=50 [ C ]
