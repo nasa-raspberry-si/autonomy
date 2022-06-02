@@ -6,14 +6,9 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
   - It will first need to follow the ["Get Started" instruction in nasa/ow_simulator](https://github.com/nasa/ow_simulator#getting-started) to install software prerequisites.
   - Create a catkin workspace
   `mkdirs -p ~/oceanwater_ws/src`
-  - pull down the v8-owplexil branch of following repos from nasa-raspberry-si git organization into ~/oceanwater_ws/src.
-    * ow_simulator
-    * ow_autonomy
-    * ow_europa
-    * irg_ope 
-    After checking out the v8-owplexil branch of nasa-raspberry-si/ow_simulator, create a soft link .rosinstall inside ~/oceanwater_ws/src using the command below and then use wstool to update code bases.
-    `ln -s ~/oceanwater_ws/src/ow_simulator/oceanwaters/workspaces/oceanwaters_v8-owplexil.rosinstall  ~/oceanwater_ws/src/.rosinstall`
-    `wstool update`
+  - pull down the v8-owplexil branch of the repos (ow_simulator, ow_autonomy, ow_europa and irg_ope) from nasa-raspberry-si git organization into ~/oceanwater_ws/src. After checking out the v8-owplexil branch of nasa-raspberry-si/ow_simulator, create a soft link .rosinstall inside ~/oceanwater_ws/src using the command below and then use wstool to update code bases.
+    * `ln -s ~/oceanwater_ws/src/ow_simulator/oceanwaters/workspaces/oceanwaters_v8-owplexil.rosinstall  ~/oceanwater_ws/src/.rosinstall`
+    * `wstool update`
   - Pull down ow8-rosnodes branch of nasa-raspberry-si/autonomy into ~/oceanwater_ws/src
   - Source ROS melodic envirionment
     * `source /opt/ros/melodic/setup.bash`
