@@ -8,6 +8,13 @@ void AdaptationAnalyzer::callback_current_plan(const ow_plexil::CurrentPlan curr
   {
     ROS_INFO_STREAM("[Analysis Node] the current plan, " << current_plan.plan_name << ", status: " << current_plan.plan_status);
   }
+
+  // A new plan starts, so reset "plan_retries"
+  if (plan_name != current_plan.plan_name)
+  {
+    plan_retries = 0;
+  }
+
   plan_name = current_plan.plan_name;
   plan_status = current_plan.plan_status;
 
@@ -70,6 +77,7 @@ void AdaptationAnalyzer::callback_arm_fault_status(const rs_autonomy::ArmFault a
   }
   else
   {
+    /*
     int timepassed = 0;
     int waittime = 30; // maximum waiting time 30 seconds
     ros::Rate rate(10);
@@ -83,6 +91,7 @@ void AdaptationAnalyzer::callback_arm_fault_status(const rs_autonomy::ArmFault a
         ROS_INFO("[Analysis Node] waiting for the arm fault clear signal to be fully reflected in the lander system in %i seconds", (waittime/10 - timepassed/10));
       }
     }
+    */
     // The previous arm fault has been cleared.
     // The status of arm fault changes from true to false
     clearing_arm_fault = false;
@@ -111,6 +120,27 @@ void AdaptationAnalyzer::callback_earth_inst(const rs_autonomy::EarthInstruction
   }
 }
 
+void AdaptationAnalyzer::update_task_control_vars()
+{
+  current_task_name = next_task_name;
+  next_task_name = "";
+  current_task_aux_info = next_task_aux_info;
+  next_task_aux_info = "";
+  
+  current_task_model_names = next_task_model_names;
+  next_task_model_names.clear(); 
+
+  terminate_current_task = false; // reset it to false to allow the task to be carried out
+  has_new_task = false; // notify the Mission componenet that it can send a new task
+
+  current_task_status = "Ready"; // reset it to "Ready", indicating the task is not starting yet.
+
+  rs_autonomy::CurrentTask current_task_msg;
+  current_task_msg.name = current_task_name;
+  current_task_msg.status = current_task_status;
+  current_task_status_pub.publish(current_task_msg);
+}
+
 // FIXME:
 // This is to assist the simulation of excavation failure.
 // It should be replaced when a more realistic simulation is available
@@ -118,10 +148,11 @@ void AdaptationAnalyzer::update_local_vars()
 {
   if (has_arm_fault)
   {
-    if (current_op_name == "Digging" && current_op_status == "starts")
+    if (current_op_name == "Grind" && current_op_status == "Started")
     {
       current_digging_failed = true;
       num_digging_failures += 1;
+      digging_failure_adaptation_on = true;
     }
   }
 }
@@ -164,27 +195,6 @@ void AdaptationAnalyzer::maintain_rtInfo(std::string action, std::string aux_inf
   }
 }
 
-void AdaptationAnalyzer::update_task_control_vars()
-{
-  current_task_name = next_task_name;
-  next_task_name = "";
-  current_task_aux_info = next_task_aux_info;
-  next_task_aux_info = "";
-  
-  current_task_model_names = next_task_model_names;
-  next_task_model_names.clear(); 
-
-  terminate_current_task = false; // reset it to false to allow the task to be carried out
-  has_new_task = false; // notify the Mission componenet that it can send a new task
-
-  current_task_status = "Ready"; // reset it to "Ready", indicating the task is not starting yet.
-
-  rs_autonomy::CurrentTask current_task_msg;
-  current_task_msg.name = current_task_name;
-  current_task_msg.status = current_task_status;
-  current_task_status_pub.publish(current_task_msg);
-}
-
 void AdaptationAnalyzer::initialize_rtInfo()
 {
   update_models(current_task_model_names);
@@ -192,39 +202,57 @@ void AdaptationAnalyzer::initialize_rtInfo()
   maintain_rtInfo(action, current_task_aux_info);
 }
 
-// Terminating the current plan and clear the arm fault if it exists
-void AdaptationAnalyzer::transition_to_safe_pose()
+// Clear Arm Fault
+void AdaptationAnalyzer::clear_arm_fault()
 {
-  ROS_INFO_STREAM("[Analysis Node] Transitioning the arm to a safe pose");
+  // Due to some bug in the fault handling in ow_simulator, when there is an effective
+  // arm fault, wait for current plan to finish with a status of Completed_Failure
+  // such that PLEXIL executive could be ready for following plans.
+  // 
+  // Here, it is assumed that the SUT will stop and cause the PLEXIL plan to fail
+  // when an arm fault is detected.
 
-  adpt_inst.adaptation_commands = { "TerminatePlan"};
-  terminating_current_plan = true;
-
-  if (has_arm_fault)
+  int timepassed = 0;
+  int waittime = 600; // maximum waiting time 60 seconds
+  ros::Rate rate(10);
+  while((plan_status!= "Completed_Failure") && (timepassed < waittime))
   {
-    adpt_inst.adaptation_commands.push_back("ClearArmFault");
-    // Due to some bug in the fault handling in ow_simulator,
-    // wait for current plan to finish with a status of Completed_FAILURE
-    // such that PLEXIL executive could be ready for following plans.
-    int timepassed = 0;
-    int waittime = 600; // maximum waiting time 60 seconds
-    ros::Rate rate(10);
-    while((plan_status!= "Completed_Failure") && (timepassed < waittime))
-    {
-      ros::spinOnce();
-      rate.sleep();
-      timepassed+=1;
-      if(timepassed % 50 == 0)
-      {
-        ROS_INFO("[Analysis Node] waiting the arm-fault-interrupted current plan to finish in %i seconds", (waittime/10 - timepassed/10));
-      }
-    }
-
-	clearing_arm_fault = true;
+	ros::spinOnce();
+	rate.sleep();
+	timepassed+=1;
+	if(timepassed % 50 == 0)
+	{
+	ROS_INFO("[Analysis Node] waiting the arm-fault-interrupted current plan to finish in %i seconds", (waittime/10 - timepassed/10));
+	}
   }
 
+  clearing_arm_fault = true;
+  adpt_inst.adaptation_commands = {"ClearArmFault"};
   adpt_inst.task_name = current_task_name;
   adpt_inst_pub.publish(adpt_inst);
+}
+
+// Terminating the current plan
+void AdaptationAnalyzer::terminate_current_plan()
+{
+  ROS_INFO_STREAM("[Analysis Node] Need to terminate the current plan");
+
+  // If there is an arm fault, clear it first
+  if (has_arm_fault) {
+    clear_arm_fault();
+  }
+
+  // If the plan does not finish, send the instruction, TerminatePlan
+  if (plan_status != "Completed_Failure"
+		&& plan_status != "Completed_Success"
+		&& plan_status != "Terminated")
+  {
+    adpt_inst.adaptation_commands = { "TerminatePlan"};
+    terminating_current_plan = true;
+
+    adpt_inst.task_name = current_task_name;
+    adpt_inst_pub.publish(adpt_inst);
+  }
 }
 
 void AdaptationAnalyzer::planning()
@@ -235,7 +263,7 @@ void AdaptationAnalyzer::planning()
 }
 
 // Update models and prepare the initial runtime info for the current task
-void AdaptationAnalyzer::initialize_task(bool syn_plan, bool terminate_current_task)
+void AdaptationAnalyzer::initialize_task(bool terminate_current_task)
 {
   // if the current task has been started, there should a plan is running for it,
   // so terminate the plan and transition the lander to the safe pose, Unstow pose.
@@ -244,7 +272,7 @@ void AdaptationAnalyzer::initialize_task(bool syn_plan, bool terminate_current_t
     ROS_INFO_STREAM("[Analysis Node] terminating the current plan of the current task"
                     << current_task_name);
 
-    transition_to_safe_pose();
+    terminate_current_plan();
     if(terminate_current_task)
     {
       rs_autonomy::CurrentTask current_task_msg;
@@ -255,43 +283,23 @@ void AdaptationAnalyzer::initialize_task(bool syn_plan, bool terminate_current_t
     }
   }
 
-  // if there is a new task, update task control variables to transition to the new task 
-  if (has_new_task)
-  {
-    ROS_INFO_STREAM("[Analysis Node] transitioning to the new task");
-    update_task_control_vars();
-    ROS_INFO_STREAM("[Analysis Node] ready to do the new task: " << current_task_name);
-  }
+  ROS_INFO_STREAM("[Analysis Node] transitioning to the new task");
+  update_task_control_vars();
+  ROS_INFO_STREAM("[Analysis Node] ready to do the new task: " << current_task_name);
 
-  if (!wait_for_quake_off)
-  {
-    // Update all models (maybe not necessary) and runtime info for the new task
-    initialize_rtInfo();
+  // Update all models (maybe not necessary) and runtime info for the new task
+  initialize_rtInfo();
 
-    if (syn_plan) // Synthesize a plan to run
-    {
-      ROS_INFO_STREAM("[Analysis Node] request a plan for the task " << current_task_name);
-      planning();
+  ROS_INFO_STREAM("[Analysis Node] request a plan for the task " << current_task_name);
+  planning();
 
-      if(current_task_status == "Ready")
-      {
-        current_task_status = "Started";
-        rs_autonomy::CurrentTask current_task_msg;
-        current_task_msg.name = current_task_name;
-        current_task_msg.status = current_task_status;
-        current_task_status_pub.publish(current_task_msg);
-      }
-      /*
-      ROS_INFO_STREAM("[Analysis Node] the task "
-                      << current_task_name
-                      <<" is ready to run a plan "
-                      << plan_name);
-      */
-    }
-  }
-  else
+  if(current_task_status == "Ready")
   {
-    ROS_INFO_STREAM("[Analysis Node] the lander is waiting for the quake to pass.");
+	current_task_status = "Started";
+	rs_autonomy::CurrentTask current_task_msg;
+	current_task_msg.name = current_task_name;
+	current_task_msg.status = current_task_status;
+	current_task_status_pub.publish(current_task_msg);
   }
 }
 
@@ -307,6 +315,7 @@ void AdaptationAnalyzer::adaptation_analysis()
   // the PLEXIL executive is ready: not terminating_current_plan. That is,
   //   the PLEXIL executive finishes with the current plan
 
+
   // Determine which adaptation should be triggered
   if (has_manual_plan && manual_planname != "") // A manual plan from the Earth
   {
@@ -316,11 +325,15 @@ void AdaptationAnalyzer::adaptation_analysis()
     // compoenent to run the manual plan.
     // Assume the manual plan from the Earth still try to complete
     // the current task, but not starts a new task.
-    transition_to_safe_pose();
+    terminate_current_plan();
 
     adpt_inst.task_name = current_task_name;
     adpt_inst.adaptation_commands = { manual_planname };
     adpt_inst_pub.publish(adpt_inst);
+
+	// reset to avoid infinite loop
+    has_manual_plan = false;
+    manual_planname = "";
   }
   else if (!wait_for_quake_off) // The lander is in active mode
   {
@@ -330,29 +343,45 @@ void AdaptationAnalyzer::adaptation_analysis()
 
       // Transition the lander to a safe mode
       wait_for_quake_off = !wait_for_quake_off; // change from false to true
-      bool syn_plan = false;
-      initialize_task(syn_plan);
-      // Currently, leave re-planning when the vibration level comes back to 0
+      // Terminate the current plan
+      terminate_current_plan();
+      // Leave re-planning when the vibration level comes back to 0
     }
     else if (terminate_current_task && has_new_task) // a new task is requsted to do instead of the current one
     {
       ROS_INFO_STREAM("[Analysis Node] a new task is requested and the current task will be termianted.");
- 
-      bool syn_plan = true;
-      initialize_task(syn_plan, terminate_current_task); 
+      // terminate the current task
+      // initialzation for the new task
+      initialize_task(terminate_current_task);
     }
-    else if (num_digging_failures == 3) // the belief of models drops too low, such initialize the task
+    // Use as a case to indicate the beliefs of both ExcaProb and SciVal models drops significantly
+    // Therefore, both of the models should be updated
+    else if (digging_failure_adaptation_on && num_digging_failures == 3)
     {
-      ROS_INFO_STREAM("[Analysis Node] the belief of both models drops below a threshold. A model update request is issued.");
+      ROS_INFO_STREAM("[Analysis Node] digging fails for 3 times. The beliefs of both ExcaProb and SciVal models drop too much. They need to be updated.");
  
-      bool syn_plan = true;
-      initialize_task(syn_plan);
+      // Update all machine-learning models
+      terminate_current_plan();
+
+      // Update Excavation-Probability Model and Science-value Model
+      std::vector<std::string> model_names = {"ExcaProb", "SciVal"};
+      update_models(model_names);
+      // Update Runtime info
+      std::string action = "Update";
+      std::string aux_info = "ExcaProb,SciVal";
+      maintain_rtInfo(action, aux_info);
+
+      // Request synthesizing a new plan
+      planning();
+
+      digging_failure_adaptation_on = false;
     }
-    else if (num_digging_failures == 2) // the belief of models drops a little, update models and rtInfo
+    // the belief of models drops a little, update models and rtInfo
+    else if (digging_failure_adaptation_on && num_digging_failures == 2) 
     {
-      ROS_INFO_STREAM("[Analysis Node] the belief of excavation probability model drops below a threshold. A model update request is issued.");
+      ROS_INFO_STREAM("[Analysis Node] digging fails twice. The belief of the ExcaProb model drops too much. It needs to be updated.");
  
-      transition_to_safe_pose();
+      terminate_current_plan();
 
       // Update Excavation-Probability Model and Runtime Info
       std::vector<std::string> model_names = {"ExcaProb"};
@@ -362,12 +391,35 @@ void AdaptationAnalyzer::adaptation_analysis()
       maintain_rtInfo(action, aux_info);
 
       planning();
+
+      digging_failure_adaptation_on = false;
     }
-    else if (current_digging_failed || has_arm_fault)
+    // The first failure of digging: arm fault is detected during Grind operation
+    else if (digging_failure_adaptation_on && num_digging_failures == 1)
     {
-      ROS_INFO_STREAM("[Analysis Node] the digging fails while the belief of models are still ok. Update the runtime information by removing the current excavalocation.");
+      ROS_INFO_STREAM("[Analysis Node] The digging fails once while the beliefs of models are still ok. Update the runtime information by removing the current excavation location.");
  
-      transition_to_safe_pose();
+      terminate_current_plan();
+
+      // FIXME: here is for excavaion sceanrio only
+      std::size_t pos = plan_aux_info.find(","); // pos is the location of first, ","
+      std::string aux_info = plan_aux_info.substr(7, pos-7); // the ID of excavation location
+      std::string action = "Remove";
+      ROS_INFO_STREAM("[Analysis Node] plan_aux_info for Remove action: " + plan_aux_info); 
+      ROS_INFO_STREAM("[Analysis Node] aux_info for Remove action: " + aux_info);
+      maintain_rtInfo(action, aux_info);
+
+      planning();
+
+      digging_failure_adaptation_on = false;
+    }
+    // When an arm fault is notified in operations (e.g., GuardedMove) other than Grind.
+    // the variable, clearing_arm_fault, prevents this branch going into a infinit loop
+    else if (has_arm_fault)
+    {
+      ROS_INFO_STREAM("[Analysis Node] An arm fault is notified during an arm operation other than Grind. Update the runtime information by removing the current excavation location.");
+ 
+      terminate_current_plan();
 
       // FIXME: here is for excavaion sceanrio only
       std::size_t pos = plan_aux_info.find(","); // pos is the location of first, ","
@@ -379,8 +431,9 @@ void AdaptationAnalyzer::adaptation_analysis()
 
       planning();
     }
-    // 1. start the first task
-    // 2. start the next task when current task is completed
+    // Cases:
+    // a. start the first task
+    // b. start the next task when current task is completed successfully
     else if (has_new_task && (current_task_name=="" || current_task_status=="Completed_Success")) 
     {
       if (current_task_name=="")
@@ -391,8 +444,47 @@ void AdaptationAnalyzer::adaptation_analysis()
       {
         ROS_INFO_STREAM("[Analysis Node] The current task is finished successfully. Starts to do a new task.");
       }
-      bool syn_plan = true;
-      initialize_task(syn_plan);
+      // Initialize runtime info for the task
+      // Request synthesizing a plan
+      initialize_task();
+    }
+    else if (plan_status=="Plan_Registration_Timeout" && plan_retries<3)
+    {
+      plan_retries += 1;
+      std::string plan_tries_str = "";
+      if (plan_retries == 1)
+      {
+        plan_tries_str = "(1st time)";
+      }
+      else if (plan_retries == 2)
+      {
+        plan_tries_str = "(2nd time)";
+      }
+      else // plan_tries == 3
+      {
+        plan_tries_str == "(3rd time)";
+      }
+
+      ROS_INFO("[Analysis Node] Wait for some ROS actions' states to finish before retrying the timed-out plan, %s.plx", plan_name.c_str());
+      int timepassed = 0;
+      int waittime = 50; // maximum waiting time 5 seconds
+      ros::Rate rate(10);
+      while(timepassed < waittime)
+      {
+        ros::spinOnce();
+        rate.sleep();
+        timepassed+=1;
+        if(timepassed % 10 == 0)
+        {
+          ROS_INFO("[Analysis Node] Waiting in %d seconds", (waittime-timepassed)/10);
+        }
+      }
+      
+      ROS_INFO("[Analysis Node] %s Retry the plan, %s.plx, whose plan registration was timed out", plan_tries_str.c_str(), plan_name.c_str());
+      
+      adpt_inst.task_name = current_task_name;
+      adpt_inst.adaptation_commands = { "RetryPlan" };
+      adpt_inst_pub.publish(adpt_inst);
     }
   }
   else // The lander is in active mode due to a previously detected earthquake
@@ -403,7 +495,9 @@ void AdaptationAnalyzer::adaptation_analysis()
       // clear the waiting tag
       wait_for_quake_off = !wait_for_quake_off; // change from true to false
 
-      // update runtime info and synthesize a plan
+      // update machine-learning models and runtime info to reflect the updated terrain
+      // and surface structure after the quake.
+      // synthesize a plan using the updated runtime info
       initialize_rtInfo(); 
       planning();
     }

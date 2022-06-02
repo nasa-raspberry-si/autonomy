@@ -128,6 +128,7 @@ class AdaptationAnalyzer {
     std::string plan_name = "";
     std::string plan_status = ""; 
     std::string plan_aux_info = "";
+    int plan_retries = 0;
     
     // Updated in the corresponding callback functions
     bool has_manual_plan = false;
@@ -142,6 +143,7 @@ class AdaptationAnalyzer {
     // The following member variables depends on the variables above
     // and should be updated accordingly by calling update_local_vars()
     int num_digging_failures = 0;
+    bool digging_failure_adaptation_on = true;
     bool current_digging_failed = false;
 
     // constantly update num_digging_failures and current_digging_failed
@@ -151,11 +153,12 @@ class AdaptationAnalyzer {
     void update_task_control_vars();
     void update_models(std::vector<std::string> model_names);
     void maintain_rtInfo(std::string action, std::string aux_info);
-    //// syn_plan indicates to synthesize a plan
-    void initialize_task(bool syn_plan=true, bool terminate_current_task=false);
+    void initialize_task(bool terminate_current_task=false);
     void initialize_rtInfo();
     void transition_to_safe_pose();
     void planning();
+    void terminate_current_plan();
+    void clear_arm_fault();
 
     // callbacks for subscribered ROS topics
     void callback_current_operation(const ow_plexil::CurrentOperation current_op);

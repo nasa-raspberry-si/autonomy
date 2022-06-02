@@ -27,6 +27,14 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
       planner_instruction.plan_name = command; // the command variable is the plan name
       planner_instruction.aux_info = "";
     }
+    // Retry the plan whose plan registration was timed out in the PLEXIL Executive
+    else if (command == "RetryPlan")
+    {
+      planner_instruction.task_name = task_name;
+      planner_instruction.command = "ADD";
+      planner_instruction.plan_name = current_plan_name;
+      planner_instruction.aux_info = "";
+    }
     else if (command == "Planning") // current task and new task
     { 
       if (task_name == adpt_inst.task_name)

@@ -45,7 +45,7 @@ class ExcaPrismModelGenerator():
                 s_loc_coord = self.rt_info["xloc_list"][s_loc_ID]['position']
                 t_loc_coord = self.rt_info["dloc_list"][t_loc_ID]['position']
                 dist = self.cal_dist(s_loc_coord, t_loc_coord)
-                energy = reward_factor * dist
+                reward = reward_factor * dist
                 code += "\t[select_"+t_loc_ID+"] loc="+s_loc_ID+" :" + str(reward)+";\n"
 	code += "endrewards\n"
         return code
@@ -71,9 +71,9 @@ class ExcaPrismModelGenerator():
 	code += "// trajectories computed by lower-level control\n"
 
 	seed(1)
-	energy_factor = random()
+	energy_factor = 1 # random()
         code += self.__generate_move_reward("EC", energy_factor)
-	time_factor = random()
+	time_factor = 1.0/0.05 # 0.05 represents the average velocity of the arm; random()
         code += self.__generate_move_reward("T", time_factor)
 
 	return code

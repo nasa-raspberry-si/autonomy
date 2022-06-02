@@ -160,14 +160,14 @@ class TaskPlanningService:
             if xloc_ids[0] in runtime_info['xloc_list']:
                 sel_xloc_id=xloc_ids[0]
         if sel_xloc_id=="": # randomly pick one excavation location from the runtime info
-           sel_xloc_id = "xloc" + str(ramdom.randint(1, num_xlocs))
+           sel_xloc_id = "xloc" + str(random.randint(1, num_xlocs))
         # id of selected dump location
         sel_dloc_id=""
         if len(dloc_ids) != 0:
             if dloc_ids[0] in runtime_info['dloc_list']:
                 sel_dloc_id=dloc_ids[0]
         if sel_dloc_id=="": # randomly pick one excavation location from the runtime info
-           sel_dloc_id = "dloc" + str(ramdom.randint(1, num_dlocs))
+           sel_dloc_id = "dloc" + str(random.randint(1, num_dlocs))
 
         # rewrite the high-level plan
         high_level_plan = "[" + "select_"+sel_xloc_id + ", " + "select_"+sel_dloc_id + "]"
