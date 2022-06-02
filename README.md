@@ -58,3 +58,5 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
       * case 7: the current task finishes and has a new task needs
    - The categorization of above cases (excluding case 7)
    ![image](https://user-images.githubusercontent.com/5262552/169354723-1b032497-6ebd-4576-8073-7cd352b3b8dc.png)
+   - Demo of adaptation cases:
+      * [Adaptation case 1 and case 2](https://github.com/nasa-raspberry-si/autonomy/tree/ow8-rosnodes/demo#readme)
