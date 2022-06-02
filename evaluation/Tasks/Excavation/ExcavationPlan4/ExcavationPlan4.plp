@@ -3,7 +3,7 @@
 #include "plan-interface.h"
 
 
-ExcavationPlan2:
+ExcavationPlan4:
 {
 	Boolean TrenchReady=false;
 	Boolean GroundDetectionSuccess=false;
@@ -13,21 +13,21 @@ ExcavationPlan2:
 	
 	ExitCondition Lookup(TerminatePlan);
 	
-	Update checkpoint_type="Plan", checkpoint_name="ExcavationPlan2.plx", checkpoint_status=PLAN_STARTED;
-	log_info ("[ExcavationPlan2.plx] Start");
+	Update checkpoint_type="Plan", checkpoint_name="ExcavationPlan4.plx", checkpoint_status=PLAN_STARTED;
+	log_info ("[ExcavationPlan4.plx] Start");
 
-	log_info ("{\"sel_xloc\": {\"sci_val\": 0.3214, \"position\": {\"y\": -0.4, \"x\": 1.51}, \"ex_prob\": 0.8695, \"name\": \"xloc3\"}, \"sel_dloc\": {\"position\": {\"y\": 0.4, \"x\": 1.91}, \"name\": \"dloc4\"}, \"task_name\": 1, \"node_name\": \"ExcavationPlan2\"}");
+	log_info ("{\"sel_xloc\": {\"sci_val\": 0.8583, \"position\": {\"y\": -0.9, \"x\": 1.46}, \"ex_prob\": 0.6029, \"name\": \"xloc2\"}, \"sel_dloc\": {\"position\": {\"y\": 0.4, \"x\": 1.91}, \"name\": \"dloc4\"}, \"task_name\": 1, \"node_name\": \"ExcavationPlan4\"}");
 
 	log_info ("[Unstow] Start");
 	LibraryCall Unstow();
 	log_info ("[Unstow] Finish");
 
 	Update checkpoint_type="Operation", checkpoint_name="GuardedMove", checkpoint_status=OP_STARTED;
-	log_info ("[GuardedMove Operation] Start: a guarded move to find out the ground postion of the location (x=1.51, y=-0.4)");
+	log_info ("[GuardedMove Operation] Start: a guarded move to find out the ground postion of the location (x=1.46, y=-0.9)");
 
 	log_info ("Start GuardedMove...");
 	LibraryCall GuardedMove (
-		X = 1.51, Y = -0.4, Z = 0.05,
+		X = 1.46, Y = -0.9, Z = 0.05,
 		DirX = 0.0, DirY = 0.0, DirZ = 1.0,
 		SearchDistance = 0.5);
 	if (Lookup(OpState("GuardedMove")) && Lookup(GroundFound)) {
@@ -44,11 +44,11 @@ ExcavationPlan2:
 
 	if (GroundDetectionSuccess) {
 		Update checkpoint_type="Operation", checkpoint_name="Grind", checkpoint_status=OP_STARTED;
-		log_info ("[Digging Operation] Start: grinding at the location (x=1.51,y=-0.4)");
+		log_info ("[Digging Operation] Start: grinding at the location (x=1.46,y=-0.9)");
 
 		log_info ("Start Grind...");
 		LibraryCall Grind (
-			X = 1.51, Y = -0.4,
+			X = 1.46, Y = -0.9,
 			Depth = 0.1, Length = 0.3,
 			GroundPos = Lookup(GroundPosition),
 			Parallel = true);
@@ -65,11 +65,11 @@ ExcavationPlan2:
 
 		if (DiggingSuccess) {
 			Update checkpoint_type="Operation", checkpoint_name="TailingRemoval", checkpoint_status=OP_STARTED;
-			log_info ("[TailingRemoval Operation] Start: remove from the depth of 0.1 meters in the trench location (x=1.51,y=-0.4) to the dump location (x=1.91,y=0.4,z=1.91)");
+			log_info ("[TailingRemoval Operation] Start: remove from the depth of 0.1 meters in the trench location (x=1.46,y=-0.9) to the dump location (x=1.91,y=0.4,z=1.91)");
 
 			log_info ("Start dig_circular...");
 			LibraryCall DigCircular (
-				X = 1.51, Y = -0.4, Depth = 0.1,
+				X = 1.46, Y = -0.9, Depth = 0.1,
 				GroundPos = Lookup(GroundPosition),
 				Parallel = true);
 			log_info ("Delivering the sample...");
@@ -96,6 +96,6 @@ ExcavationPlan2:
 		PlanStatus=PLAN_FAILURE;
 	}
 
-	Update checkpoint_type="Plan", checkpoint_name="ExcavationPlan2.plx", checkpoint_status=PlanStatus;
-	log_info ("[ExcavationPlan2.plx] Finish");
+	Update checkpoint_type="Plan", checkpoint_name="ExcavationPlan4.plx", checkpoint_status=PlanStatus;
+	log_info ("[ExcavationPlan4.plx] Finish");
 }

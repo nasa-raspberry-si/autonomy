@@ -31,7 +31,7 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
         - `export PLEXIL\_LIB\_COMPILED\_PLAN\_DIR=< the direcotry of compiled PLEXIL plan in devel dir >`
      * Run with an example mission specification file, [mission1.txt](https://github.com/nasa-raspberry-si/autonomy/blob/ow8-rosnodes/evaluation/mission1.txt)
         - roslaunch rs\_autonomy rs\_autonomy.launch mission\_spec\_filename:=mission1.txt
-     * If the evaluation directory is decided to be inside this code base, run.bash script can be used to avoid the above two steps.
+     * If the evaluation directory is decided to be inside this code base, [run.bash](https://github.com/nasa-raspberry-si/autonomy/blob/ow8-rosnodes/run.bash) script can be used to avoid the above two steps.
 
 # Code Organization
    - Mission Control node and MAPE-K nodes (except knowledge node)

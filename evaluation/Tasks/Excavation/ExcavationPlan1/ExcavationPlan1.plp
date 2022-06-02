@@ -16,24 +16,21 @@ ExcavationPlan1:
 	Update checkpoint_type="Plan", checkpoint_name="ExcavationPlan1.plx", checkpoint_status=PLAN_STARTED;
 	log_info ("[ExcavationPlan1.plx] Start");
 
-	log_info ("{\"sel_xloc\": {\"sci_val\": 0.1719, \"position\": {\"y\": 0.3, \"x\": 1.92}, \"ex_prob\": 0.9237, \"name\": \"xloc1\"}, \"sel_dloc\": {\"position\": {\"y\": 0.8, \"x\": 1.67}, \"name\": \"dloc4\"}, \"task_name\": 1, \"node_name\": \"ExcavationPlan1\"}");
+	log_info ("{\"sel_xloc\": {\"sci_val\": 0.5327, \"position\": {\"y\": 0.6, \"x\": 1.49}, \"ex_prob\": 0.7836, \"name\": \"xloc1\"}, \"sel_dloc\": {\"position\": {\"y\": 0.4, \"x\": 1.91}, \"name\": \"dloc4\"}, \"task_name\": 1, \"node_name\": \"ExcavationPlan1\"}");
 
 	log_info ("[Unstow] Start");
 	LibraryCall Unstow();
 	log_info ("[Unstow] Finish");
 
-	GroundDetection: {
-		Update checkpoint_type="Operation", checkpoint_name="GroundDetection", checkpoint_status=OP_STARTED;
-		log_info ("[GroundDetection Operation] Start: a guarded move to find out the ground postion of the location (x=1.92, y=0.3)");
+	Update checkpoint_type="Operation", checkpoint_name="GuardedMove", checkpoint_status=OP_STARTED;
+	log_info ("[GuardedMove Operation] Start: a guarded move to find out the ground postion of the location (x=1.49, y=0.6)");
 
-		log_info ("Start GuardedMove...");
-		LibraryCall GuardedMove (
-			X = 1.92, Y = 0.3, Z = 0.05,
-			DirX = 0.0, DirY = 0.0, DirZ = 1.0,
-			SearchDistance = 0.5);
-	}
-
-	if (Lookup(GroundFound) && GroundDetection.outcome == SUCCESS) {
+	log_info ("Start GuardedMove...");
+	LibraryCall GuardedMove (
+		X = 1.49, Y = 0.6, Z = 0.05,
+		DirX = 0.0, DirY = 0.0, DirZ = 1.0,
+		SearchDistance = 0.5);
+	if (Lookup(OpState("GuardedMove")) && Lookup(GroundFound)) {
 		GroundDetectionSuccess=true;
 		OpOutcome=OP_SUCCESS;
 		log_info ("Detected ground position: ", Lookup(GroundPosition));
@@ -42,23 +39,20 @@ ExcavationPlan1:
 		OpOutcome=OP_FAILURE;
 	}
 
-	Update checkpoint_type="Operation", checkpoint_name="GroundDetection", checkpoint_status=OpOutcome;
-	log_info ("[GroundDetection Operation] ", OpOutcome);
+	Update checkpoint_type="Operation", checkpoint_name="GuardedMove", checkpoint_status=OpOutcome;
+	log_info ("[GuardedMove Operation] ", OpOutcome);
 
 	if (GroundDetectionSuccess) {
-		Digging: {
-			Update checkpoint_type="Operation", checkpoint_name="Digging", checkpoint_status=OP_STARTED;
-			log_info ("[Digging Operation] Start: grinding at the location (x=1.92,y=0.3)");
+		Update checkpoint_type="Operation", checkpoint_name="Grind", checkpoint_status=OP_STARTED;
+		log_info ("[Digging Operation] Start: grinding at the location (x=1.49,y=0.6)");
 
-			log_info ("Start Grind...");
-			LibraryCall Grind (
-				X = 1.92, Y = 0.3,
-				Depth = 0.1, Length = 0.3,
-				GroundPos = Lookup(GroundPosition),
-				Parallel = true);
-		}
-
-		if (Digging.outcome == SUCCESS) {
+		log_info ("Start Grind...");
+		LibraryCall Grind (
+			X = 1.49, Y = 0.6,
+			Depth = 0.1, Length = 0.3,
+			GroundPos = Lookup(GroundPosition),
+			Parallel = true);
+		if (Lookup(OpState("Grind"))) {
 			DiggingSuccess=true;
 			OpOutcome=OP_SUCCESS;
 		}
@@ -66,24 +60,21 @@ ExcavationPlan1:
 			OpOutcome=OP_FAILURE;
 		}
 
-		Update checkpoint_type="Operation", checkpoint_name="Digging", checkpoint_status=OpOutcome;
-		log_info ("[Digging Operation] ", OpOutcome);
+		Update checkpoint_type="Operation", checkpoint_name="Grind", checkpoint_status=OpOutcome;
+		log_info ("[Grind Operation] ", OpOutcome);
 
 		if (DiggingSuccess) {
-			TailingRemoval: {
-				Update checkpoint_type="Operation", checkpoint_name="TailingRemoval", checkpoint_status=OP_STARTED;
-				log_info ("[TailingRemoval Operation] Start: remove from the depth of 0.1 meters in the trench location (x=1.92,y=0.3) to the dump location (x=1.67,y=0.8,z=1.67)");
+			Update checkpoint_type="Operation", checkpoint_name="TailingRemoval", checkpoint_status=OP_STARTED;
+			log_info ("[TailingRemoval Operation] Start: remove from the depth of 0.1 meters in the trench location (x=1.49,y=0.6) to the dump location (x=1.91,y=0.4,z=1.91)");
 
-				log_info ("Start dig_circular...");
-				LibraryCall DigCircular (
-					X = 1.92, Y = 0.3, Depth = 0.1,
-					GroundPos = Lookup(GroundPosition),
-					Parallel = true);
-				log_info ("Delivering the sample...");
-				LibraryCall Deliver (X = 1.67, Y = 0.8, Z = 0.02);
-			}
-
-			if (TailingRemoval.outcome == SUCCESS) {
+			log_info ("Start dig_circular...");
+			LibraryCall DigCircular (
+				X = 1.49, Y = 0.6, Depth = 0.1,
+				GroundPos = Lookup(GroundPosition),
+				Parallel = true);
+			log_info ("Delivering the sample...");
+			LibraryCall Deliver (X = 1.91, Y = 0.4, Z = 0.02);
+			if (Lookup(OpState("DigCircular")) && Lookup(OpState("Deliver"))) {
 				TrenchReady=true;
 				OpOutcome=OP_SUCCESS;
 			}
