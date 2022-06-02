@@ -138,10 +138,10 @@ class PlexilPlanTranslator():
             "Plan_Finish" : CheckPoint("Plan", node_name+".plx", "PlanStatus"),
 
             # For Operation Status
-            "GroundDetection_Start": CheckPoint("Operation", "GroundDetection", "OP_STARTED"),
-            "GroundDetection_Finish": CheckPoint("Operation", "GroundDetection", "OpOutcome"),
-            "Digging_Start": CheckPoint("Operation", "Digging", "OP_STARTED"),
-            "Digging_Finish": CheckPoint("Operation", "Digging", "OpOutcome"),
+            "GuardedMove_Start": CheckPoint("Operation", "GuardedMove", "OP_STARTED"),
+            "GuardedMove_Finish": CheckPoint("Operation", "GuardedMove", "OpOutcome"),
+            "Grind_Start": CheckPoint("Operation", "Grind", "OP_STARTED"),
+            "Grind_Finish": CheckPoint("Operation", "Grind", "OpOutcome"),
             "TailingRemoval_Start": CheckPoint("Operation", "TailingRemoval", "OP_STARTED"),
             "TailingRemoval_Finish": CheckPoint("Operation", "TailingRemoval", "OpOutcome"),
         }
@@ -161,25 +161,28 @@ class PlexilPlanTranslator():
         code += self.gen_plan_info(1, plan_info)
         code += self.gen_unstow(1)
 
-        # GroundDetection node
-        cp_start = checkpoints["GroundDetection_Start"]
-        gd_node_body = self.gen_ground_detection_body(2, cp_start, xloc_x, xloc_y)
-        code += self.gen_plexil_node(1, "GroundDetection", gd_node_body)
+        # GuardedMove Operation
+        cp_start = checkpoints["GuardedMove_Start"]
+        code += self.gen_checkpoint(1, cp_start)
+        temp_msg = "[GuardedMove Operation] Start: a guarded move to find out the ground postion of the location (x=" + str(xloc_x) + ", y=" + str(xloc_y) + ")"
+        code += self.gen_log_info(1, str_expr="\"" + temp_msg + "\"")
+        code += "\n"
+        code += self.gen_guarded_move(
+                    1, xloc_x, xloc_y, 
+                    z=0.05, dir_x=0.0, dir_y=0.0, dir_z=1.0, search_dist=0.5)
 
-        # Check the result of GroundDetection
-        ## gdo : ground detection outcome
-        gdo_if_cond = "Lookup(GroundFound) && GroundDetection.outcome == SUCCESS"
+        # Check and send out the result of GuardedMove Operation (gmr: GuardedMoveResult)
+        gmr_if_cond = "Lookup(OpState(\"GuardedMove\")) && Lookup(GroundFound)"
         temp_var_assignments = {
             "GroundDetectionSuccess" : "true",
             "OpOutcome"              : "OP_SUCCESS"
         }
-        gdo_if_body = self.gen_var_assignment(2, temp_var_assignments)
-        gdo_if_body += self.gen_log_info(2, "\"Detected ground position: \", Lookup(GroundPosition)") 
-        gdo_else_body = self.gen_var_assignment(2, {"OpOutcome" : "OP_FAILURE"}) 
-        code += self.gen_if_stat(1, gdo_if_cond, gdo_if_body, gdo_else_body, [])
-        ## Send out the result
-        code += self.gen_checkpoint(1, checkpoints["GroundDetection_Finish"])
-        code += self.gen_log_info(1, "\"[GroundDetection Operation] \", OpOutcome")
+        gmr_if_body = self.gen_var_assignment(2, temp_var_assignments)
+        gmr_if_body += self.gen_log_info(2, "\"Detected ground position: \", Lookup(GroundPosition)") 
+        gmr_else_body = self.gen_var_assignment(2, {"OpOutcome" : "OP_FAILURE"}) 
+        code += self.gen_if_stat(1, gmr_if_cond, gmr_if_body, gmr_else_body, [])
+        code += self.gen_checkpoint(1, checkpoints["GuardedMove_Finish"])
+        code += self.gen_log_info(1, "\"[GuardedMove Operation] \", OpOutcome")
         code += "\n"
 
         # Continue the plan if GroundDetection is successful
@@ -188,64 +191,69 @@ class PlexilPlanTranslator():
         gds_if_cond = "GroundDetectionSuccess"
         gds_if_body = ""
         
-        ## Digging node
-        ## dg : digging
-        cp_start = checkpoints["Digging_Start"]
-        dg_node_body = self.gen_digging_body(3, cp_start, xloc_x, xloc_y, trench_depth, trench_length)    
-        dg_node = self.gen_plexil_node(2, "Digging", dg_node_body)
-        gds_if_body += dg_node # add Digging node to the body of "if (GroundDetectionSuccess)"
-        ## Check the result of Digging
-        ### dgo : digging outcome
-        dgo_if_cond = "Digging.outcome == SUCCESS"
+        ## Grind operation
+        cp_start = checkpoints["Grind_Start"]
+        gds_if_body += self.gen_checkpoint(2, cp_start)
+        temp_msg = "[Digging Operation] Start: grinding at the location (x=" + str(xloc_x) + ",y=" + str(xloc_y) + ")"
+        gds_if_body += self.gen_log_info(2, "\"" + temp_msg + "\"")
+        gds_if_body += "\n"
+        gds_if_body += self.gen_grind(
+                    2, xloc_x, xloc_y,
+                    depth=0.1, length=0.3, parallel=True)
+        ## Check and send out the result of Grind operation (gr : GrindResult)
+        gr_if_cond = "Lookup(OpState(\"Grind\"))"
         temp_var_assignments = {
             "DiggingSuccess" : "true",
             "OpOutcome"      : "OP_SUCCESS"
         }
-        dgo_if_body = self.gen_var_assignment(3, temp_var_assignments)
-        dgo_else_body = self.gen_var_assignment(3, {"OpOutcome" : "OP_FAILURE"}) 
-        dgo_if_stat = self.gen_if_stat(2, dgo_if_cond, dgo_if_body, dgo_else_body, [])
-        # add "if (Digging.outcome == SUCCESS) to the body of "if (GroundDetectionSuccess)"
-        gds_if_body += dgo_if_stat
+        gr_if_body = self.gen_var_assignment(3, temp_var_assignments)
+        gr_else_body = self.gen_var_assignment(3, {"OpOutcome" : "OP_FAILURE"}) 
+        gr_if_stat = self.gen_if_stat(2, gr_if_cond, gr_if_body, gr_else_body, [])
+        gds_if_body += gr_if_stat
         ## Send out the result
-        gds_if_body += self.gen_checkpoint(2, checkpoints["Digging_Finish"])
-        gds_if_body += self.gen_log_info(2, "\"[Digging Operation] \", OpOutcome")
+        gds_if_body += self.gen_checkpoint(2, checkpoints["Grind_Finish"])
+        gds_if_body += self.gen_log_info(2, "\"[Grind Operation] \", OpOutcome")
         gds_if_body += "\n"
 
-        ## Continue the plan if Digging is successful
+        ## Continue the plan if Grind operation is successful
         ## Start generating the statement "if (DiggingSuccess)"
         ## dgs : digging success
         dgs_if_cond = "DiggingSuccess"
         dgs_if_body = ""
 
-        ### TailingRemoval node
+        ### TailingRemoval Operation: DigCircular and Deliver actions
         cp_start = checkpoints["TailingRemoval_Start"]
-        tr_node_body = self.gen_tailing_remove_body(4, cp_start, xloc_x, xloc_y, trench_depth, dloc_x, dloc_y, dloc_z)
-        tr_node = self.gen_plexil_node(3, "TailingRemoval", tr_node_body)
-        dgs_if_body += tr_node
-        ### Check the result of TailingRemove
-        #### tro : Trailing Removal Outcome
-        tro_if_cond = "TailingRemoval.outcome == SUCCESS"
+        dgs_if_body += self.gen_checkpoint(3, cp_start)
+        temp_msg = "[TailingRemoval Operation] Start: remove from the depth of " + str(trench_depth) + " meters in the trench location (x=" + str(xloc_x) + ",y=" + str(xloc_y) + ") to the dump location (x=" + str(dloc_x) + ",y=" + str(dloc_y) + ",z=" + str(dloc_x) + ")"
+        dgs_if_body += self.gen_log_info(3, "\"" + temp_msg + "\"")
+        dgs_if_body += "\n"
+        #### Grab tailing using DigCircular
+        dgs_if_body += self.gen_dig_circular(3, xloc_x, xloc_y, trench_depth)
+        #### Move tailing to the dump location
+        dgs_if_body += self.gen_deliver(3, dloc_x, dloc_y, dloc_z)
+       
+        ### Check and send out the result of TailingRemove operation (trr: TailingRemovalResult)
+        trr_if_cond = "Lookup(OpState(\"DigCircular\")) && Lookup(OpState(\"Deliver\"))"
         temp_var_assignments = {
             "TrenchReady" : "true",
             "OpOutcome"   : "OP_SUCCESS"
         }
-        tro_if_body = self.gen_var_assignment(4, temp_var_assignments)
-        tro_else_body = self.gen_var_assignment(4, {"OpOutcome" : "OP_FAILURE"}) 
-        tro_if_stat = self.gen_if_stat(3, tro_if_cond, tro_if_body, tro_else_body, [])
-        dgs_if_body += tro_if_stat
-        ### Send out the result
+        trr_if_body = self.gen_var_assignment(4, temp_var_assignments)
+        trr_else_body = self.gen_var_assignment(4, {"OpOutcome" : "OP_FAILURE"}) 
+        trr_if_stat = self.gen_if_stat(3, trr_if_cond, trr_if_body, trr_else_body, [])
+        dgs_if_body += trr_if_stat
         dgs_if_body += self.gen_checkpoint(3, checkpoints["TailingRemoval_Finish"])
         dgs_if_body += self.gen_log_info(3, "\"[TailingRemoval Operation] \", OpOutcome")
         dgs_if_body += "\n"
 
-        ## Close IF statement, "if (DiggingSuccess)"
+        ## Close the IF statement, "if (DiggingSuccess)"
         dgs_if_stat = self.gen_if_stat(2, dgs_if_cond, dgs_if_body)
 
-        # Close IF statement for checking if ground detection succeeds
+        # Close the IF statement, "if (GroundDetectionSuccess)"
         gds_if_body += dgs_if_stat
         code += self.gen_if_stat(1, gds_if_cond, gds_if_body)
 
-        # Check if the trench is ready
+        # Check the IF statement, "if (TrenchReady)"
         code += self.gen_plan_finish_status(1, "TrenchReady")
 
         # Send out the status of the plan
