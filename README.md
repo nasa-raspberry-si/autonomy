@@ -11,6 +11,9 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
     * ow_autonomy
     * ow_europa
     * irg_ope 
+    After checking out the v8-owplexil branch of nasa-raspberry-si/ow_simulator, create a soft link .rosinstall inside ~/oceanwater_ws/src using the command below and then use wstool to update code bases.
+    `ln -s ~/oceanwater_ws/src/ow_simulator/oceanwaters/workspaces/oceanwaters_v8-owplexil.rosinstall  ~/oceanwater_ws/src/.rosinstall`
+    `wstool update`
   - Pull down ow8-rosnodes branch of nasa-raspberry-si/autonomy into ~/oceanwater_ws/src
   - Source ROS melodic envirionment
     * `source /opt/ros/melodic/setup.bash`
@@ -32,7 +35,8 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
         - `export OW\_PLEXIL\_LIB\_SOURCE\_DIR=< PLEXIL library source directory >`
         - `export PLEXIL\_LIB\_COMPILED\_PLAN\_DIR=< the direcotry of compiled PLEXIL plan in devel dir >`
      * Run with an example mission specification file, [mission1.txt](https://github.com/nasa-raspberry-si/autonomy/blob/ow8-rosnodes/evaluation/mission1.txt)
-        - roslaunch rs\_autonomy rs\_autonomy mission\_spec\_filename:=mission1.txt
+        - roslaunch rs\_autonomy rs\_autonomy.launch mission\_spec\_filename:=mission1.txt
+     * If the evaluation directory is decided to be inside this code base, run.bash script can be used to avoid the above two steps.
 
 # Code Organization
    - Mission Control node and MAPE-K nodes (except knowledge node)
