@@ -400,8 +400,8 @@ void AdaptationAnalyzer::adaptation_analysis()
       // Update Excavation-Probability Model and Runtime Info for the left excavation locations
       std::vector<std::string> model_names = {"ExcaProb"};
       update_models(model_names);
-      std::string action = "Update";
-      std::string aux_info = "ExcaProb";
+      action = "Update";
+      aux_info = "ExcaProb";
       maintain_rtInfo(action, aux_info);
 
       planning();
