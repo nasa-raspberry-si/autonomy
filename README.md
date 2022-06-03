@@ -70,7 +70,7 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
     * Two available docker images are available for play at: oceank/oceanworld:r8 and oceank/rs_autonomy:ow8-rosnodes 
   - Run a docker container using the rs_autonomy image
     * Create the docker container, oceanworld, with the GPU support.</br>
-    `xhost +local:root  
-     ocker run --name oceanworld --rm -it --gpus all -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 raspberrysi/rs_autonomy:ow8-rosnodes bash`
+    `xhost +local:root`</br>
+     `docker run --name oceanworld --rm -it --gpus all -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 raspberrysi/rs_autonomy:ow8-rosnodes bash`
     * Open two terminals. In each terminal, access to the docker container, oceanworld, by using the following command. One terminal is for running the PLEXIL Executive (ow_plexil package) while the other one is for running rs_autonomy.</br>
     `docker exec -it oceanworld bash`
