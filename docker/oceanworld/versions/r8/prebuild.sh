@@ -3,29 +3,6 @@ set -x
 wget https://repo1.maven.org/maven2/ant/optional/1.5.4/optional-1.5.4.jar 
 mv optional-1.5.4.jar /usr/share/ant/lib
 
-#   The source codes of ow_simulator and ow_autnomy that are used
-#   in our project are some versions between release 8 and realse 9.
-#   Therefore, it needs to switch ow_simulator and ow_autonomy to
-#   the corresponding commits after pulling down from the master
-#   branch of the two repos (release 9).
-#
-#   -   ow_simulator: commit 662fea6
-#   -   ow_autonomy: commit 34f36ab
-#
-#   The codes of the two repos are saved in /ros_ws/src/ow_simulator
-#   and /ros_ws/src/ow_autonomy in the docker image.
-
-#   The following commands should be commented/removed when our
-#   project starts to use Realse 9 of ow_simulator and ow_autonomy.
-cd /ros_ws/src/ow_simulator
-git checkout 662fea6 -b v8-owplexil
-cd /ros_ws/src/ow_autonomy
-git checkout 34f36ab -b v8-owplexil
-cd /ros_ws/src/ow_europa
-git checkout tags/8.0 -b v8-owplexil
-cd /ros_ws/src/irg_open
-git checkout tags/8.0 -b v8-owplexil
-cd /ros_ws
 
 # For ow_ephemeris: change the mismatch of checksums of downloaded
 # artifacts from NASA from SEND_ERROR to WARNING such that unnecessary hacking

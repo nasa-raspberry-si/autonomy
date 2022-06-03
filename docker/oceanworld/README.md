@@ -54,3 +54,4 @@ Inside the container, run:
    4. [Supporting OpenGL/WebGL and using HW acceleration (GPU)](https://github.com/accetto/ubuntu-vnc-xfce-g3/discussions/10)
    5. [NASA OceanWORLD simulator, ow_simulator](https://github.com/nasa/ow_simulator)
    6. [TheRobotCooperative](https://github.com/TheRobotCooperative/TheRobotCooperative)
+   7. [OceanWATERS](https://github.com/nasa/ow_simulator)
