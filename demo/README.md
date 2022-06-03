@@ -1,7 +1,7 @@
 # Demo for the adaptation case 1 and case 2
 After following the [steps](https://github.com/nasa-raspberry-si/autonomy/tree/ow8-rosnodes#run-the-raspberry-si-autonomy) to run the [mission1.txt](https://github.com/nasa-raspberry-si/autonomy/blob/ow8-rosnodes/evaluation/mission1.txt), we trigger an adaptation during different lander arm operations by setting the arm fault parameter, **shou\_yaw\_effort\_failure**, in [the fault configuration tab](https://github.com/nasa/ow_simulator/wiki/Fault-Injection-and-Modeling/2f5ede92df2704a68d7a1b0436e2dc81612a29c5) in rqt (developed by [OceanWATERS](https://github.com/nasa/ow_simulator)). In this demo, we differentiate an arm fault into two groups based on when it occurs. In the first group, the arm fault happens during an Grind operation and causes it to be aborted. We call it a digging failure. In the second group, the arm fault happens during arm operations other than the Grind operation.
 
-All tests below were conducted in one run. The recording of the experiment can be found [here](https://pjamshid-nas.us6.quickconnect.to/vs/sharing/nT3s55MM#!bW92aWUtMjQ=).
+All tests below were conducted in one run. The recording of the experiment can be found [here](https://pjamshid-nas.us6.quickconnect.to/vs/sharing/nT3s55MM#!bW92aWUtMjU=).
 
 ## Adaptation Case 1: Failure caused by the physical interaction between the environment and the lander
 
