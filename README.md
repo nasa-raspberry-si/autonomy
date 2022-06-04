@@ -63,14 +63,14 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
 
 # Docker Image
   - Build oceanworld and rs_autonomy images
-    * Build oceanworld image</br>
-    `cd docker/oceanworld && ./build.sh melodic r8 raspberrysi`
-    * Build rs_autonomy image</br>
-    `cd docker/rs_autonomy && ./build.sh raspberrysi/oceanworld:r8 melodic ow8-rosnodes raspberrysi`
-    * Two available docker images are available for play at: oceank/oceanworld:r8 and oceank/rs_autonomy:ow8-rosnodes 
+    * Build oceanworld image, aisys/raspberry-oceanworld:v8</br>
+    `cd docker/oceanworld && ./build.sh melodic v8 aisys`
+    * Build rs_autonomy image, aisys/raspberry-autonomy:v1</br>
+    `cd docker/rs_autonomy && ./build.sh aisys/raspberrysi-oceanworld:v8 melodic v1 aisys ow8-rosnodes`
+    * Two available docker images are available for play at: aisys/raspberrysi-oceanworld:v8 and aisys/raspberry-autonomy:v1
   - Run a docker container using the rs_autonomy image
     * Create the docker container, oceanworld, with the GPU support.</br>
     `xhost +local:root`</br>
-     `docker run --name oceanworld --rm -it --gpus all -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 raspberrysi/rs_autonomy:ow8-rosnodes bash`
+     `docker run --name oceanworld --rm -it --gpus all -v /tmp/.X11-unix:/tmp/.X11-unix -e DISPLAY=$DISPLAY -e QT_X11_NO_MITSHM=1 aisys/raspberrysi-autonomy:v1 bash`
     * Open two terminals. In each terminal, access to the docker container, oceanworld, by using the following command. One terminal is for running the PLEXIL Executive (ow_plexil package) while the other one is for running rs_autonomy.</br>
     `docker exec -it oceanworld bash`

@@ -15,8 +15,8 @@ ENV ROS_DISTRO ${DISTRO}
 WORKDIR /ros_ws
 
 ## Download Raspberry-SI autonomy code
-ARG IMAGE_VERSION
-RUN git clone --branch ${IMAGE_VERSION} https://github.com/nasa-raspberry-si/autonomy.git ./src/rs_autonomy
+ARG CODE_BRANCH
+RUN git clone --branch ${CODE_BRANCH} https://github.com/nasa-raspberry-si/autonomy.git ./src/rs_autonomy
 
 ## Build Raspberry-SI autonomy, rs_autonomy
 ARG BUILD_COMMAND=". ~/.profile; catkin build"

@@ -20,7 +20,7 @@
 
 # Build And Test
 ## Build the docker image
-`./build.sh <ROS_DISTRO> <IMAGE_VERSION>`
+`./build.sh <ROS_DISTRO> <IMAGE_VERSION> <DOCKERHUB_ORG>`
 <br>Inside the directory, *versions*, there should be a subdirectory with the name, <IMAGE_VERSION>
 <br>Currently, there are two verions available in the repo, which correspond to the release 8 and release 9 of ow_simulator
 ## Test

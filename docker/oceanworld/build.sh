@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Currently Supported Inputs
-# (DISTRO, IMAGE_VERSION, DOCKERHUB_ORG): e.g., (melodic, r8, raspberrysi), (noetic, r9, raspberrysi)
+# (DISTRO, IMAGE_VERSION, DOCKERHUB_ORG): e.g., (melodic, v8, aisys), (noetic, v9, aisys)
 DISTRO=$1
 IMAGE_VERSION=$2
 DOCKERHUB_ORG=$3
 
 echo -e "Inputs:\n\tDISTRO:${DISTRO}\n\tIMAGE_VERSION:${IMAGE_VERSION}\n\tDOCKERHUB_ORG:${DOCKERHUB_ORG}\n"
 
-IMAGE_NAME=oceanworld
+IMAGE_NAME=raspberrysi-oceanworld
 DIRECTORY="versions/${IMAGE_VERSION}"
 
 
