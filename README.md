@@ -67,7 +67,9 @@ This branch is based on the release 8 of ow_simulator and ow_autonomy.
     `cd docker/oceanworld && ./build.sh melodic v8 aisys`
     * Build rs_autonomy image, aisys/raspberry-autonomy:v1</br>
     `cd docker/rs_autonomy && ./build.sh aisys/raspberrysi-oceanworld:v8 melodic v1 aisys ow8-rosnodes`
-    * Two available docker images are available for play at: aisys/raspberrysi-oceanworld:v8 and aisys/raspberry-autonomy:v1
+    * Two available docker images are available for play at:
+       - aisys/raspberrysi-oceanworld:v8
+       - aisys/raspberrysi-autonomy:v1
   - Run a docker container using the rs_autonomy image
     * Create the docker container, oceanworld, with the GPU support.</br>
     `xhost +local:root`</br>
