@@ -11,13 +11,22 @@ class FaultManagementService:
     def __init__(self):
         self.faults_config_client = dynamic_reconfigure.client.Client('/faults')
 
+        # ow_simulator Release 8
+        # Fault Injection and Modeling:
+        # https://github.com/nasa/ow_simulator/wiki/Fault-Injection-and-Modeling/2f5ede92df2704a68d7a1b0436e2dc81612a29c5
         self.arm_faults_vars_dict = {
-        1: "dist_pitch_effort_failure",
-        2: "hand_yaw_effort_failure",
-        3: "prox_pitch_effort_failure",
-        4: "scoop_yaw_effort_failure",
-        5: "shou_pitch_effort_failure",
-        6: "shou_yaw_effort_failure"
+                1: "dist_pitch_encoder_failure",
+                2: "dist_pitch_effort_failure",
+                3: "hand_yaw_encoder_failure",
+                4: "hand_yaw_effort_failure",
+                5: "prox_pitch_encoder_failure",
+                6: "prox_pitch_effort_failure",
+                7: "scoop_yaw_encoder_failure",
+                8: "scoop_yaw_effort_failure",
+                9: "shou_pitch_encoder_failure",
+                10: "shou_pitch_effort_failure",
+                11: "shou_yaw_encoder_failure",
+                12: "shou_yaw_effort_failure"
         }
 
         #    ow_simulator Release 9
