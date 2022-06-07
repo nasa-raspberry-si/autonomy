@@ -7,3 +7,4 @@ We enhanced the [ow_plexil](https://github.com/nasa/ow_autonomy) package as foll
       * Adding support for PLEXIL Update node in a format of having three variables, checkpoint_type, checkpoint_name and checkpoint_status. Below is an example of sending out the state of GuardedMove operation to the autonomy. </br>
       `Update checkpoint_type="Operation", checkpoint_name="GuardedMove", checkpoint_status=OpOutcome;`
       * Adding two ROS messages, CurrentPlan.msg and CurrentOperation.msg
+      * Adding the Lookup, OpState(String operation_name), to check the state of the operation when it finishes. Currently, the Lookup, OpState(String) supports several operations related to excavation, including, GuardedMove, Grind, DigCicular and Deliver.
