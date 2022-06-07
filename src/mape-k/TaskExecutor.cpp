@@ -7,26 +7,21 @@ rs_autonomy::ArmFaultConfig TaskExecutor::create_fault_clear_req()
   rs_autonomy::ArmFaultConfig srv;
   srv.request.action = "Clear";
   srv.request.arm_fault_var_ids = {
-	  "dist_pitch_encoder_failure",
-          "dist_pitch_effort_failure",
-          "hand_yaw_encoder_failure",
-          "hand_yaw_effort_failure",
-          "prox_pitch_encoder_failure",
-          "prox_pitch_effort_failure",
-          "scoop_yaw_encoder_failure",
-          "scoop_yaw_effort_failure",
-          "shou_pitch_encoder_failure",
-          "shou_pitch_effort_failure",
-          "shou_yaw_encoder_failure",
-          "shou_yaw_effort_failure"
+	  "dist_pitch_joint_locked_failure",
+          "hand_yaw_joint_locked_failure",
+          "prox_pitch_joint_locked_failure",
+          "scoop_yaw_joint_locked_failure",
+          "shou_pitch_joint_locked_failure",
+          "shou_yaw_joint_locked_failure"
+
   };
   srv.request.values = {
-	  "False", "False",
-	  "False", "False",
-	  "False", "False",
-	  "False", "False",
-	  "False", "False",
-	  "False", "False"
+	  "False",
+	  "False",
+	  "False",
+	  "False",
+	  "False",
+	  "False"
   };
   return srv;
 }
