@@ -5,7 +5,8 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
   std::string task_name = adpt_inst.task_name;
   for (auto command : adpt_inst.adaptation_commands)
   {
-    bool is_valid_cmd = true;
+    // the planner instruction is supposed to send to the Task Executor componenet
+    bool ready_to_send_planner_inst = true;
     if (command == "TerminatePlan")
     {
       planner_instruction.task_name = task_name;
@@ -43,7 +44,7 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
       }
       else
       {
-	    task_name = adpt_inst.task_name;
+	task_name = adpt_inst.task_name;
         current_plan_id = 1; // frist plan for the new task
       }
       current_plan_name = task_name + "Plan" + std::to_string(current_plan_id);
@@ -52,30 +53,39 @@ void TaskPlanner::callback_adap_inst_sub(const rs_autonomy::AdaptationInstructio
 
       if (task_planning_service_client.call(task_planning))
       {
-        // FIXME: disable the message
-        // the high-level plan here contains the keys of locations, but not their names
-        ROS_INFO_STREAM("[Planner Node] high-level plan (keys but not loc names) is " << task_planning.response.high_level_plan);
-        planner_instruction.task_name = task_name;
-        planner_instruction.command = "ADD";
-        planner_instruction.plan_name = current_plan_name;
-        planner_instruction.aux_info = task_planning.response.high_level_plan;
-        rs_autonomy::HighLevelPlan hlp_msg;
-        hlp_msg.plan = task_planning.response.high_level_plan;
-        high_level_plan_pub.publish(hlp_msg);
+	if (task_planning.response.success)
+	{
+          // FIXME: disable the message
+          // the high-level plan here contains the keys of locations, but not their names
+          ROS_INFO_STREAM("[Planner Node] high-level plan (keys but not loc names) is " << task_planning.response.high_level_plan);
+          planner_instruction.task_name = task_name;
+          planner_instruction.command = "ADD";
+          planner_instruction.plan_name = current_plan_name;
+          planner_instruction.aux_info = task_planning.response.high_level_plan;
+          rs_autonomy::HighLevelPlan hlp_msg;
+          hlp_msg.plan = task_planning.response.high_level_plan;
+          high_level_plan_pub.publish(hlp_msg);
+	}
+	else
+	{
+	  ROS_INFO_STREAM("[Planner Node] planning fails.");
+	  ready_to_send_planner_inst = false;
+	}
       }
       else
       {
         // FIXME: notify the failure to the analysis componenet
-	    ROS_ERROR("[Planner Node] unable to talk to /task_planning service. Planning fails.");
+	ROS_ERROR("[Planner Node] unable to talk to /task_planning service. Planning fails.");
+	ready_to_send_planner_inst = false;
       }
     }
     else
     {
-      is_valid_cmd = false;
+      ready_to_send_planner_inst = false;
       ROS_INFO_STREAM("[Planner Node] receives an unknown adaptation command, " << command);
     }
 
-    if (is_valid_cmd)
+    if (ready_to_send_planner_inst)
     {
       ROS_INFO_STREAM("[Planner Node] receives an adaptation command: " << command);
       this->planner_inst_pub.publish(this->planner_instruction);
