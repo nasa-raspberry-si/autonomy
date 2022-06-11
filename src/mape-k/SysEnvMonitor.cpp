@@ -1,6 +1,6 @@
 #include "SysEnvMonitor.h"
 
-void SysEnvMonitor::callback_arm_fault_status(const ow_faults::ArmFaults::ConstPtr& msg)
+void SysEnvMonitor::callback_arm_fault_status(const ow_faults_detection::ArmFaults::ConstPtr& msg)
 {
   if (arm_fault_status != msg->value) 
   {
