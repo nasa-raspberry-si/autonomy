@@ -25,6 +25,12 @@ class PlanTranslationService:
         rospy.loginfo("[Plan Translation Node] service '/plan_translation' is ready")
 
 
+    def get_task_base_name(self, task_name):
+        if "Excavation" in task_name:
+            return "Excavation"
+        else:
+            return "Unsupported"
+
     def __translation(self, task_name, plan_name, high_level_plan):
         # Step 1
         # * Load runtime info file
@@ -41,8 +47,9 @@ class PlanTranslationService:
         # * Call PLEXIL plan translation utility
         loginfo("[Plan Translation - Step 2] High-level plan parsing and PLEXIL plan writeup.")
         
+        task_base_name = self.get_task_base_name(task_name)
         self.plexil_plan_translator.translate(
-                task_name,
+                task_base_name,
                 runtime_info,
                 plan_name,
                 current_plan_dir,
@@ -67,7 +74,7 @@ class PlanTranslationService:
         high_level_plan = req.high_level_plan
 
         success = True
-        if req.task_name == "Excavation":
+        if "Excavation" in task_name:
             loginfo("[Plan Translation Service] translating the high-level plan (" + req.high_level_plan + ") to a PLEXIL plan " + req.plan_name + ".plp for the task, " + req.task_name)
             self.__translation(task_name, plan_name, high_level_plan)
         else:

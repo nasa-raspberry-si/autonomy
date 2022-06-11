@@ -15,6 +15,8 @@ from prism_planning.gen_prism_model import ExcaPrismModelGenerator
 class TaskPlanningService:
     def __init__(self, evaluation_root_dir):
         self.evaluation_root_dir = evaluation_root_dir
+        # The key is the base name of a task, e.g., "Excavation".
+        # While the task name could be "Excavation1", "Excavation2" and so on.
         # Add additonal items when have a new task for planning
         self.utility_filenames_by_tasks = {
             "Excavation":
@@ -33,7 +35,11 @@ class TaskPlanningService:
                 self.callback_task_planning)
         rospy.loginfo("[Task Planning Service] service '/task_planning' is ready")
 
-
+    def get_task_base_name(self, task_name):
+        if "Excavation" in task_name:
+            return "Excavation"
+        else:
+            return "Unsupported"
 
     # Main steps in the planning
     # 1 Information preparation
@@ -51,7 +57,7 @@ class TaskPlanningService:
         #   by the analysis componenet. Check the dict, utility_filenames_by_tasks. 
         loginfo("[Task Planning Service - Step 1] Information Preparation")
         task_dir = self.evaluation_root_dir + "/Tasks/" + task_name
-        task_planning_resources_dir = self.evaluation_root_dir + "/Task_Planning_Resources/"
+        task_planning_resources_dir = self.evaluation_root_dir + "/Task_Planning_Resources"
         current_plan_dir = task_dir + "/" + plan_name 
         try:
             if not os.path.exists(current_plan_dir):
@@ -61,11 +67,12 @@ class TaskPlanningService:
                 loginfo("The directory " + current_plan_dir + " already exists")
         except OSError as error:
             loginfo(error)
+        task_base_name = self.get_task_base_name(task_name)
 
         # * Copy the current runtime info file to the current plan directory
         # * Load runtime information for the following steps
         loginfo("[Task Planning Service - Step 1] Loading the current runtime information...")
-        current_rt_info_filepath = task_dir + "/" + self.utility_filenames_by_tasks[task_name]['rt_info']
+        current_rt_info_filepath = task_dir + "/" + self.utility_filenames_by_tasks[task_base_name]['rt_info']
         cmd = "cp " + current_rt_info_filepath + " " + current_plan_dir
         os.system(cmd)
         runtime_info = {}
@@ -84,12 +91,12 @@ class TaskPlanningService:
         prism_model_fp = current_plan_dir + "/exca_"+str(num_xlocs)+"xlocs_"+str(num_dlocs)+"dlocs.prism"
 
         prism_planning_utility_dir = ""
-        if "Excavation" == task_name:
-            prism_planing_utility_dir = task_planning_resources_dir + "/Excavation"
+        if "Excavation" == task_base_name:
+            prism_planing_utility_dir = task_planning_resources_dir + "/" + task_base_name
         else:
-            loginfo("[Task Planning Service - Step 2] Error: unknown task: " + task_name)
-        prismpp_sh_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks[task_name]['pp_sh']
-        prism_preprocessor_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks[task_name]['preprocessor']
+            loginfo("[Task Planning Service - Step 2] Error: unsupported task: " + task_name)
+        prismpp_sh_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks[task_base_name]['pp_sh']
+        prism_preprocessor_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks[task_base_name]['preprocessor']
         
         # * Generating the Prism model.
         prism_generator = ExcaPrismModelGenerator(
@@ -103,7 +110,7 @@ class TaskPlanningService:
         # Step 3
         # * Use PRISM model to extract policy
         loginfo("[Task Planning Service - Step 3]: Use PRISM model to extract the policy")
-        prism_property_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks[task_name]['property']
+        prism_property_fp = prism_planing_utility_dir + "/" + self.utility_filenames_by_tasks[task_base_name]['property']
         policy_filename = "policy.adv"
         policy_fp = os.path.join(current_plan_dir, policy_filename)
 
@@ -121,14 +128,15 @@ class TaskPlanningService:
         java_class_path_of_PrismPolicy = prism_planing_utility_dir + ":"
         cmd_syn_plan = "java " + \
                 "-cp " + java_class_path_of_PrismPolicy + " " + \
-                self.utility_filenames_by_tasks[task_name]['policy_extract'] + " " + \
+                self.utility_filenames_by_tasks[task_base_name]['policy_extract'] + " " + \
                 policy_fp
         loginfo("[Task Planning Service - Step 4] CMD To Run: " + cmd_syn_plan)
         p_sp = Popen(cmd_syn_plan, shell=True, stdout=PIPE, stderr=PIPE)
         stdout, stderr = p_sp.communicate()
         # high-level plan looks like: "[action1, action2, ...]"
         # the name of each action is prefixed by "select_"
-        high_level_plan = stdout.splitlines()[-1]
+        # decode(): convert a byte squence to a string
+        high_level_plan = stdout.splitlines()[-1].decode()
         # FIXME: some issue in PrismPolicy.java for extracting the high-level plan.
         # Problem:
         #        Sometime, the output by querying a excavation Prism model could
@@ -201,7 +209,7 @@ class TaskPlanningService:
     def callback_task_planning(self, req):
         success = True
         high_level_plan_str = ""
-        if req.task_name == "Excavation":
+        if "Excavation" in req.task_name:
             loginfo("[Task Planning Service] synthesizing a plan for the task " + req.task_name)
             high_level_plan_str = self.__planning(req.plan_name, req.task_name)
         else:
