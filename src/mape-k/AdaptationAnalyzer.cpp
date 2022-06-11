@@ -427,15 +427,13 @@ void AdaptationAnalyzer::adaptation_analysis()
 
       digging_failure_adaptation_on = false;
     }
-    // When an arm fault is notified in operations (e.g., GuardedMove) other than Grind.
-    // the variable, clearing_arm_fault, prevents this branch going into a infinit loop
+    // Cases:
+    // a. an arm fault is detected in operations (e.g., GuardedMove) other than Grind operation
     else if (has_arm_fault)
     {
       ROS_INFO_STREAM("[Analysis Node] An arm fault is notified during an arm operation other than Grind. Update the runtime information by removing the current excavation location.");
- 
       terminate_current_plan();
-
-      // FIXME: here is for excavaion sceanrio only
+ 
       std::size_t pos = plan_aux_info.find(","); // pos is the location of first, ","
       std::string aux_info = plan_aux_info.substr(7, pos-7); // the ID of excavation location
       std::string action = "Remove";
