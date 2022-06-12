@@ -2,9 +2,9 @@ python3-pip
 python3-rosdep
 python3-rosinstall
 python3-rosinstall-generator
+python3-osrf-pycommon
 python3-wstool
 python3-catkin-tools
-python3-osrf-pycommon
 ros-noetic-tf2-ros
 ros-noetic-robot-state-publisher
 ros-noetic-joint-state-publisher
@@ -32,8 +32,8 @@ ros-noetic-cmake-modules
 ros-noetic-stereo-msgs
 ros-noetic-stereo-image-proc
 ros-noetic-kdl-parser-py
-libgtk2.0-dev 
-libglew-dev 
+libgtk2.0-dev
+libglew-dev
 make 
 autotools-dev 
 autoconf 
