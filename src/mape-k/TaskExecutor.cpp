@@ -190,6 +190,7 @@ void TaskExecutor::handle_exec_commands()
   while(ros::ok())
   {
     if (exec_commands.size() > 0) {
+      bool consume_next_command = true;
       if (exec_commands[0] == "ClearArmFault")
       {
         clear_arm_fault();
@@ -200,11 +201,23 @@ void TaskExecutor::handle_exec_commands()
       }
       else // (exec_commands[0] == "ADD")
       {
-        send_inst_to_plexil_executive("ADD", exec_plans[0]);
+	if (current_plan_status == ""
+	    || current_plan_status == "Terminated"
+	    || current_plan_status == "Completed_Failure"
+	    || current_plan_status == "Completed_Success")
+	{
+          send_inst_to_plexil_executive("ADD", exec_plans[0]);
+	}
+	else
+	{
+	  consume_next_command = false;
+	}
       }
 
-      exec_commands.erase(exec_commands.begin());
-      exec_plans.erase(exec_plans.begin());
+      if (consume_next_command){
+        exec_commands.erase(exec_commands.begin());
+        exec_plans.erase(exec_plans.begin());
+      }
     }
     // if no commands yet
     ros::spinOnce();
