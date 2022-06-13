@@ -72,11 +72,7 @@ void AdaptationAnalyzer::callback_arm_fault_status(const rs_autonomy::ArmFault a
 {
   ROS_INFO_STREAM("[Analysis Node] a change of arm fault status is notified. Is there an arm fault: " + std::to_string(arm_fault.has_a_fault));
   has_arm_fault = arm_fault.has_a_fault;
-  if(has_arm_fault)
-  {
-    plan_status = "StopByArmFault";
-  }
-  else
+  if(!has_arm_fault)
   {
     /*
     int timepassed = 0;
