@@ -2,7 +2,7 @@
 Please refer to docments in the directory [doc](https://github.com/nasa-raspberry-si/autonomy/tree/ow9/doc) for the detailed design idea.
 
 # Build 
-This branch is based on the release 9 of OceanWATERS testbed (actually, a version of noetic-devel branch).
+This branch is based on the release 9 of OceanWATERS testbed (a version of noetic-devel branch. Details can be found in the [release note of v2.0.0](https://github.com/nasa-raspberry-si/autonomy/releases/tag/v2.0.0)).
   - It will first need to follow the ["Get Started" instruction in nasa/ow_simulator](https://github.com/nasa/ow_simulator#getting-started) to install software prerequisites.
   - Create a catkin workspace
   `mkdirs -p ~/oceanwater_ws/src`
