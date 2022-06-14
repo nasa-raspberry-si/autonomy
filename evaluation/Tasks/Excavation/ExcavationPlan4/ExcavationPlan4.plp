@@ -16,17 +16,17 @@ ExcavationPlan4:
 	Update checkpoint_type="Plan", checkpoint_name="ExcavationPlan4.plx", checkpoint_status=PLAN_STARTED;
 	log_info ("[ExcavationPlan4.plx] Start");
 
-	log_info ("{\"sel_xloc\": {\"name\": \"xloc7\", \"position\": {\"x\": 1.67, \"y\": -0.8}, \"sci_val\": 0.6575, \"ex_prob\": 0.7334}, \"sel_dloc\": {\"name\": \"dloc4\", \"position\": {\"x\": 1.68, \"y\": 0.7}}, \"node_name\": \"ExcavationPlan4\"}");
+	log_info ("{\"sel_xloc\": {\"name\": \"xloc2\", \"position\": {\"x\": 1.48, \"y\": -0.7}, \"sci_val\": 0.1785, \"ex_prob\": 0.9329}, \"sel_dloc\": {\"name\": \"dloc4\", \"position\": {\"x\": 1.52, \"y\": -0.3}}, \"node_name\": \"ExcavationPlan4\"}");
 
 	log_info ("[Unstow] Start");
 	LibraryCall Unstow();
 	log_info ("[Unstow] Finish");
 
 	Update checkpoint_type="Operation", checkpoint_name="GuardedMove", checkpoint_status=OP_STARTED;
-	log_info ("[GuardedMove Operation] Start: a guarded move to find out the ground postion of the location (x=1.67, y=-0.8)");
+	log_info ("[GuardedMove Operation] Start: a guarded move to find out the ground postion of the location (x=1.48, y=-0.7)");
 
 	LibraryCall GuardedMove (
-		X = 1.67, Y = -0.8, Z = 0.05,
+		X = 1.48, Y = -0.7, Z = 0.05,
 		DirX = 0.0, DirY = 0.0, DirZ = 1.0,
 		SearchDistance = 0.5);
 	if (Lookup(OpState("GuardedMove")) && Lookup(GroundFound)) {
@@ -43,10 +43,10 @@ ExcavationPlan4:
 
 	if (GroundDetectionSuccess) {
 		Update checkpoint_type="Operation", checkpoint_name="Grind", checkpoint_status=OP_STARTED;
-		log_info ("[Grind Operation] Start: grinding at the location (x=1.67,y=-0.8)");
+		log_info ("[Grind Operation] Start: grinding at the location (x=1.48,y=-0.7)");
 
 		LibraryCall Grind (
-			X = 1.67, Y = -0.8,
+			X = 1.48, Y = -0.7,
 			Depth = 0.1, Length = 0.3,
 			GroundPos = Lookup(GroundPosition),
 			Parallel = true);
@@ -63,13 +63,13 @@ ExcavationPlan4:
 
 		if (DiggingSuccess) {
 			Update checkpoint_type="Operation", checkpoint_name="TailingRemoval", checkpoint_status=OP_STARTED;
-			log_info ("[TailingRemoval Operation] Start: remove from the depth of 0.1 meters in the trench location (x=1.67,y=-0.8) to the dump location (x=1.68,y=0.7,z=1.68)");
+			log_info ("[TailingRemoval Operation] Start: remove from the depth of 0.1 meters in the trench location (x=1.48,y=-0.7) to the dump location (x=1.52,y=-0.3,z=1.52)");
 
 			LibraryCall DigCircular (
-				X = 1.67, Y = -0.8, Depth = 0.1,
+				X = 1.48, Y = -0.7, Depth = 0.1,
 				GroundPos = Lookup(GroundPosition),
 				Parallel = true);
-			LibraryCall Discard (X = 1.68, Y = 0.7, Z = 0.02);
+			LibraryCall Discard (X = 1.52, Y = -0.3, Z = 0.02);
 			if (Lookup(OpState("DigCircular")) && Lookup(OpState("Discard"))) {
 				TrenchReady=true;
 				OpOutcome=OP_SUCCESS;

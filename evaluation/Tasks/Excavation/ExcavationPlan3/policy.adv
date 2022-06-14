@@ -5,20 +5,20 @@
 3 94 1 
 4 95 1 
 5 96 1 
-6 0 0.1276 try_xloc1
-6 8 0.8724 try_xloc1
-7 53 1 select_dloc1
-8 54 1 select_dloc1
-9 51 1 select_dloc1
-10 52 1 select_dloc1
-11 49 1 select_dloc1
-12 50 1 select_dloc1
-13 47 1 select_dloc1
-14 48 1 select_dloc1
-15 45 1 select_dloc1
-16 46 1 select_dloc1
-17 55 1 select_dloc2
-18 56 1 select_dloc2
+6 0 0.0577 try_xloc1
+6 8 0.9423 try_xloc1
+7 77 1 select_dloc3
+8 78 1 select_dloc3
+9 75 1 select_dloc3
+10 76 1 select_dloc3
+11 73 1 select_dloc3
+12 74 1 select_dloc3
+13 71 1 select_dloc3
+14 72 1 select_dloc3
+15 69 1 select_dloc3
+16 70 1 select_dloc3
+17 67 1 select_dloc3
+18 68 1 select_dloc3
 19 79 1 select_dloc4
 20 81 1 select_dloc4
 21 83 1 select_dloc4
