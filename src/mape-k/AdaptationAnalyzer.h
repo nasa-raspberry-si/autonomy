@@ -129,6 +129,15 @@ class AdaptationAnalyzer {
     std::string plan_status = ""; 
     std::string plan_aux_info = "";
     int plan_retries = 0;
+    //// Whenever planning() is called, wait_for_new_plan is set to true.
+    //// This avoids the Analysis component requesting another plan while
+    //// the new plan is waiting for the current plan to end.
+    //// wait_for_new_plan will be set to false when a new plan_name is
+    //// detected in the callback_current_plan().
+    //// FIXME: The planner componenet should notify the Analysis componenet
+    ////        the failure of planning and update wait_for_new_plan.
+    ////        ROS action could be a better solution here than a ROS topic.
+    bool wait_for_new_plan = false;
     
     // Updated in the corresponding callback functions
     bool has_manual_plan = false;

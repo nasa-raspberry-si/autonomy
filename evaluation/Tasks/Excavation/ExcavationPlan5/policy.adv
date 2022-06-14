@@ -1,198 +1,307 @@
-196 197
-0 181 1 
-1 182 1 
-2 183 1 
-3 184 1 
-4 185 1 
-5 186 1 
-6 187 1 
-7 188 1 
-8 189 1 
-9 190 1 
-10 191 1 
-11 192 1 
-12 193 1 
-13 194 1 
-14 195 1 
-15 12 0.177 try_xloc13
-15 41 0.823 try_xloc13
-16 149 1 select_dloc2
-17 150 1 select_dloc2
-18 147 1 select_dloc2
-19 148 1 select_dloc2
-20 175 1 select_dloc3
-21 176 1 select_dloc3
-22 143 1 select_dloc2
-23 144 1 select_dloc2
-24 171 1 select_dloc3
-25 172 1 select_dloc3
-26 139 1 select_dloc2
-27 140 1 select_dloc2
-28 137 1 select_dloc2
-29 138 1 select_dloc2
-30 135 1 select_dloc2
-31 136 1 select_dloc2
-32 163 1 select_dloc3
-33 164 1 select_dloc3
-34 131 1 select_dloc2
-35 132 1 select_dloc2
-36 159 1 select_dloc3
-37 160 1 select_dloc3
-38 127 1 select_dloc2
-39 128 1 select_dloc2
-40 125 1 select_dloc2
-41 126 1 select_dloc2
-42 123 1 select_dloc2
-43 124 1 select_dloc2
-44 121 1 select_dloc2
-45 122 1 select_dloc2
-46 151 1 select_dloc3
-47 153 1 select_dloc3
-48 155 1 select_dloc3
-49 157 1 select_dloc3
-50 159 1 select_dloc3
-51 161 1 select_dloc3
-52 163 1 select_dloc3
-53 165 1 select_dloc3
-54 167 1 select_dloc3
-55 169 1 select_dloc3
-56 171 1 select_dloc3
-57 173 1 select_dloc3
-58 175 1 select_dloc3
-59 177 1 select_dloc3
-60 179 1 select_dloc3
-61 151 1 select_dloc3
-62 153 1 select_dloc3
-63 155 1 select_dloc3
-64 157 1 select_dloc3
-65 159 1 select_dloc3
-66 161 1 select_dloc3
-67 163 1 select_dloc3
-68 165 1 select_dloc3
-69 167 1 select_dloc3
-70 169 1 select_dloc3
-71 171 1 select_dloc3
-72 173 1 select_dloc3
-73 175 1 select_dloc3
-74 177 1 select_dloc3
-75 179 1 select_dloc3
-76 151 1 select_dloc3
-77 153 1 select_dloc3
-78 155 1 select_dloc3
-79 157 1 select_dloc3
-80 159 1 select_dloc3
-81 161 1 select_dloc3
-82 163 1 select_dloc3
-83 165 1 select_dloc3
-84 167 1 select_dloc3
-85 169 1 select_dloc3
-86 171 1 select_dloc3
-87 173 1 select_dloc3
-88 175 1 select_dloc3
-89 177 1 select_dloc3
-90 179 1 select_dloc3
-91 91 1 
-92 46 1 select_xloc15
-93 93 1 
-94 47 1 select_xloc14
-95 95 1 
-96 48 1 select_xloc13
-97 97 1 
-98 49 1 select_xloc12
-99 99 1 
-100 50 1 select_xloc11
-101 101 1 
-102 51 1 select_xloc10
-103 103 1 
-104 52 1 select_xloc9
-105 105 1 
-106 53 1 select_xloc8
-107 107 1 
-108 54 1 select_xloc7
-109 109 1 
-110 55 1 select_xloc6
-111 111 1 
-112 56 1 select_xloc5
-113 113 1 
-114 57 1 select_xloc4
-115 115 1 
-116 58 1 select_xloc3
-117 117 1 
-118 59 1 select_xloc2
-119 119 1 
-120 60 1 select_xloc1
-121 121 1 
-122 61 1 select_xloc15
-123 123 1 
-124 62 1 select_xloc14
-125 125 1 
-126 63 1 select_xloc13
-127 127 1 
-128 64 1 select_xloc12
+305 306
+0 289 1 
+1 290 1 
+2 291 1 
+3 292 1 
+4 293 1 
+5 294 1 
+6 295 1 
+7 296 1 
+8 297 1 
+9 298 1 
+10 299 1 
+11 300 1 
+12 301 1 
+13 302 1 
+14 303 1 
+15 304 1 
+16 4 0.1225 try_xloc5
+16 26 0.8775 try_xloc5
+17 255 1 select_dloc4
+18 256 1 select_dloc4
+19 253 1 select_dloc4
+20 254 1 select_dloc4
+21 251 1 select_dloc4
+22 252 1 select_dloc4
+23 249 1 select_dloc4
+24 250 1 select_dloc4
+25 247 1 select_dloc4
+26 248 1 select_dloc4
+27 245 1 select_dloc4
+28 246 1 select_dloc4
+29 211 1 select_dloc3
+30 212 1 select_dloc3
+31 209 1 select_dloc3
+32 210 1 select_dloc3
+33 239 1 select_dloc4
+34 240 1 select_dloc4
+35 205 1 select_dloc3
+36 206 1 select_dloc3
+37 235 1 select_dloc4
+38 236 1 select_dloc4
+39 233 1 select_dloc4
+40 234 1 select_dloc4
+41 199 1 select_dloc3
+42 200 1 select_dloc3
+43 229 1 select_dloc4
+44 230 1 select_dloc4
+45 195 1 select_dloc3
+46 196 1 select_dloc3
+47 225 1 select_dloc4
+48 226 1 select_dloc4
+49 257 1 select_dloc5
+50 259 1 select_dloc5
+51 261 1 select_dloc5
+52 263 1 select_dloc5
+53 265 1 select_dloc5
+54 267 1 select_dloc5
+55 269 1 select_dloc5
+56 271 1 select_dloc5
+57 273 1 select_dloc5
+58 275 1 select_dloc5
+59 277 1 select_dloc5
+60 279 1 select_dloc5
+61 281 1 select_dloc5
+62 283 1 select_dloc5
+63 285 1 select_dloc5
+64 287 1 select_dloc5
+65 257 1 select_dloc5
+66 259 1 select_dloc5
+67 261 1 select_dloc5
+68 263 1 select_dloc5
+69 265 1 select_dloc5
+70 267 1 select_dloc5
+71 269 1 select_dloc5
+72 271 1 select_dloc5
+73 273 1 select_dloc5
+74 275 1 select_dloc5
+75 277 1 select_dloc5
+76 279 1 select_dloc5
+77 281 1 select_dloc5
+78 283 1 select_dloc5
+79 285 1 select_dloc5
+80 287 1 select_dloc5
+81 257 1 select_dloc5
+82 259 1 select_dloc5
+83 261 1 select_dloc5
+84 263 1 select_dloc5
+85 265 1 select_dloc5
+86 267 1 select_dloc5
+87 269 1 select_dloc5
+88 271 1 select_dloc5
+89 273 1 select_dloc5
+90 275 1 select_dloc5
+91 277 1 select_dloc5
+92 279 1 select_dloc5
+93 281 1 select_dloc5
+94 283 1 select_dloc5
+95 285 1 select_dloc5
+96 287 1 select_dloc5
+97 257 1 select_dloc5
+98 259 1 select_dloc5
+99 261 1 select_dloc5
+100 263 1 select_dloc5
+101 265 1 select_dloc5
+102 267 1 select_dloc5
+103 269 1 select_dloc5
+104 271 1 select_dloc5
+105 273 1 select_dloc5
+106 275 1 select_dloc5
+107 277 1 select_dloc5
+108 279 1 select_dloc5
+109 281 1 select_dloc5
+110 283 1 select_dloc5
+111 285 1 select_dloc5
+112 287 1 select_dloc5
+113 257 1 select_dloc5
+114 259 1 select_dloc5
+115 261 1 select_dloc5
+116 263 1 select_dloc5
+117 265 1 select_dloc5
+118 267 1 select_dloc5
+119 269 1 select_dloc5
+120 271 1 select_dloc5
+121 273 1 select_dloc5
+122 275 1 select_dloc5
+123 277 1 select_dloc5
+124 279 1 select_dloc5
+125 281 1 select_dloc5
+126 283 1 select_dloc5
+127 285 1 select_dloc5
+128 287 1 select_dloc5
 129 129 1 
-130 65 1 select_xloc11
+130 49 1 select_xloc16
 131 131 1 
-132 66 1 select_xloc10
+132 50 1 select_xloc15
 133 133 1 
-134 67 1 select_xloc9
+134 51 1 select_xloc14
 135 135 1 
-136 68 1 select_xloc8
+136 52 1 select_xloc13
 137 137 1 
-138 69 1 select_xloc7
+138 53 1 select_xloc12
 139 139 1 
-140 70 1 select_xloc6
+140 54 1 select_xloc11
 141 141 1 
-142 71 1 select_xloc5
+142 55 1 select_xloc10
 143 143 1 
-144 72 1 select_xloc4
+144 56 1 select_xloc9
 145 145 1 
-146 73 1 select_xloc3
+146 57 1 select_xloc8
 147 147 1 
-148 74 1 select_xloc2
+148 58 1 select_xloc7
 149 149 1 
-150 75 1 select_xloc1
+150 59 1 select_xloc6
 151 151 1 
-152 76 1 select_xloc15
+152 60 1 select_xloc5
 153 153 1 
-154 77 1 select_xloc14
+154 61 1 select_xloc4
 155 155 1 
-156 78 1 select_xloc13
+156 62 1 select_xloc3
 157 157 1 
-158 79 1 select_xloc12
+158 63 1 select_xloc2
 159 159 1 
-160 80 1 select_xloc11
+160 64 1 select_xloc1
 161 161 1 
-162 81 1 select_xloc10
+162 65 1 select_xloc16
 163 163 1 
-164 82 1 select_xloc9
+164 66 1 select_xloc15
 165 165 1 
-166 83 1 select_xloc8
+166 67 1 select_xloc14
 167 167 1 
-168 84 1 select_xloc7
+168 68 1 select_xloc13
 169 169 1 
-170 85 1 select_xloc6
+170 69 1 select_xloc12
 171 171 1 
-172 86 1 select_xloc5
+172 70 1 select_xloc11
 173 173 1 
-174 87 1 select_xloc4
+174 71 1 select_xloc10
 175 175 1 
-176 88 1 select_xloc3
+176 72 1 select_xloc9
 177 177 1 
-178 89 1 select_xloc2
+178 73 1 select_xloc8
 179 179 1 
-180 90 1 select_xloc1
+180 74 1 select_xloc7
 181 181 1 
-182 182 1 
+182 75 1 select_xloc6
 183 183 1 
-184 184 1 
+184 76 1 select_xloc5
 185 185 1 
-186 186 1 
+186 77 1 select_xloc4
 187 187 1 
-188 188 1 
+188 78 1 select_xloc3
 189 189 1 
-190 190 1 
+190 79 1 select_xloc2
 191 191 1 
-192 192 1 
+192 80 1 select_xloc1
 193 193 1 
-194 194 1 
+194 81 1 select_xloc16
 195 195 1 
+196 82 1 select_xloc15
+197 197 1 
+198 83 1 select_xloc14
+199 199 1 
+200 84 1 select_xloc13
+201 201 1 
+202 85 1 select_xloc12
+203 203 1 
+204 86 1 select_xloc11
+205 205 1 
+206 87 1 select_xloc10
+207 207 1 
+208 88 1 select_xloc9
+209 209 1 
+210 89 1 select_xloc8
+211 211 1 
+212 90 1 select_xloc7
+213 213 1 
+214 91 1 select_xloc6
+215 215 1 
+216 92 1 select_xloc5
+217 217 1 
+218 93 1 select_xloc4
+219 219 1 
+220 94 1 select_xloc3
+221 221 1 
+222 95 1 select_xloc2
+223 223 1 
+224 96 1 select_xloc1
+225 225 1 
+226 97 1 select_xloc16
+227 227 1 
+228 98 1 select_xloc15
+229 229 1 
+230 99 1 select_xloc14
+231 231 1 
+232 100 1 select_xloc13
+233 233 1 
+234 101 1 select_xloc12
+235 235 1 
+236 102 1 select_xloc11
+237 237 1 
+238 103 1 select_xloc10
+239 239 1 
+240 104 1 select_xloc9
+241 241 1 
+242 105 1 select_xloc8
+243 243 1 
+244 106 1 select_xloc7
+245 245 1 
+246 107 1 select_xloc6
+247 247 1 
+248 108 1 select_xloc5
+249 249 1 
+250 109 1 select_xloc4
+251 251 1 
+252 110 1 select_xloc3
+253 253 1 
+254 111 1 select_xloc2
+255 255 1 
+256 112 1 select_xloc1
+257 257 1 
+258 113 1 select_xloc16
+259 259 1 
+260 114 1 select_xloc15
+261 261 1 
+262 115 1 select_xloc14
+263 263 1 
+264 116 1 select_xloc13
+265 265 1 
+266 117 1 select_xloc12
+267 267 1 
+268 118 1 select_xloc11
+269 269 1 
+270 119 1 select_xloc10
+271 271 1 
+272 120 1 select_xloc9
+273 273 1 
+274 121 1 select_xloc8
+275 275 1 
+276 122 1 select_xloc7
+277 277 1 
+278 123 1 select_xloc6
+279 279 1 
+280 124 1 select_xloc5
+281 281 1 
+282 125 1 select_xloc4
+283 283 1 
+284 126 1 select_xloc3
+285 285 1 
+286 127 1 select_xloc2
+287 287 1 
+288 128 1 select_xloc1
+289 289 1 
+290 290 1 
+291 291 1 
+292 292 1 
+293 293 1 
+294 294 1 
+295 295 1 
+296 296 1 
+297 297 1 
+298 298 1 
+299 299 1 
+300 300 1 
+301 301 1 
+302 302 1 
+303 303 1 
+304 304 1 

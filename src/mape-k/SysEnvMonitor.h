@@ -7,10 +7,7 @@
 #include <ros/package.h>
 
 // OW
-// FIXME: Topic: /faults/arm_faults_status
-// - r9:ow_faults_detection/ArmFaults (#include <ow_faults_detection/ArmFaults.h>)
-// - r8:ow_faults/ArmFaults (#include <ow_faults/ArmFaults.h>)
-#include <ow_faults/ArmFaults.h>
+#include <ow_faults_detection/ArmFaults.h>
 #include <ow_plexil/CurrentPlan.h>
 #include <ow_plexil/CurrentOperation.h>
 #include <rs_autonomy/VibrationLevel.h>
@@ -38,7 +35,7 @@ class SysEnvMonitor {
       // Initialize subscribers and bind callbacks
       // The messages from /faults/arm_faults_status and /Env/VibrationLevel
       // may be relatively fast, so set a large size of queue.
-      arm_fault_sub = nh->subscribe<ow_faults::ArmFaults>(
+      arm_fault_sub = nh->subscribe<ow_faults_detection::ArmFaults>(
 		      "/faults/arm_faults_status",
     		      100,
 		      &SysEnvMonitor::callback_arm_fault_status,
@@ -72,10 +69,7 @@ class SysEnvMonitor {
     void callback_current_plan(const ow_plexil::CurrentPlan current_plan);
     void callback_current_op(const ow_plexil::CurrentOperation current_op);
     void callback_vibration_level(const rs_autonomy::VibrationLevel vl);
-    // * arm fault message type:
-    //   - r9:ow_faults_detection/ArmFaults (#include <ow_faults_detection/ArmFaults.h>)
-    //   - r8:ow_faults/ArmFaults (#include <ow_faults/ArmFaults.h>)
-    void callback_arm_fault_status(const ow_faults::ArmFaults::ConstPtr& msg);
+    void callback_arm_fault_status(const ow_faults_detection::ArmFaults::ConstPtr& msg);
 
     // monitored variables
     int vibration_level = 0; // 0 - normal, 1 - earthquake

@@ -13,6 +13,7 @@ void AdaptationAnalyzer::callback_current_plan(const ow_plexil::CurrentPlan curr
   if (plan_name != current_plan.plan_name)
   {
     plan_retries = 0;
+    wait_for_new_plan = false;
   }
 
   plan_name = current_plan.plan_name;
@@ -71,11 +72,7 @@ void AdaptationAnalyzer::callback_arm_fault_status(const rs_autonomy::ArmFault a
 {
   ROS_INFO_STREAM("[Analysis Node] a change of arm fault status is notified. Is there an arm fault: " + std::to_string(arm_fault.has_a_fault));
   has_arm_fault = arm_fault.has_a_fault;
-  if(has_arm_fault)
-  {
-    plan_status = "StopByArmFault";
-  }
-  else
+  if(!has_arm_fault)
   {
     /*
     int timepassed = 0;
@@ -264,6 +261,7 @@ void AdaptationAnalyzer::planning()
   adpt_inst.task_name = current_task_name;
   adpt_inst.adaptation_commands = { "Planning"};
   adpt_inst_pub.publish(adpt_inst);
+  wait_for_new_plan = true;
 }
 
 // Update models and prepare the initial runtime info for the current task
@@ -309,7 +307,7 @@ void AdaptationAnalyzer::initialize_task(bool terminate_current_task)
 
 void AdaptationAnalyzer::adaptation_analysis()
 {
-  if (terminating_current_plan || clearing_arm_fault)
+  if (terminating_current_plan || clearing_arm_fault || wait_for_new_plan)
   {
     return;
   }
@@ -318,6 +316,9 @@ void AdaptationAnalyzer::adaptation_analysis()
   // the lander is ready: not clearing_arm_fault
   // the PLEXIL executive is ready: not terminating_current_plan. That is,
   //   the PLEXIL executive finishes with the current plan
+  // a clean plan is running: wait_for_new_plan is false. The plan here is
+  //   synthesized based on the previous adaptation analysis. This avoids
+  //   the repeated runs of adaptation analysis on the same situation.
 
 
   // Determine which adaptation should be triggered
@@ -427,15 +428,13 @@ void AdaptationAnalyzer::adaptation_analysis()
 
       digging_failure_adaptation_on = false;
     }
-    // When an arm fault is notified in operations (e.g., GuardedMove) other than Grind.
-    // the variable, clearing_arm_fault, prevents this branch going into a infinit loop
+    // Cases:
+    // a. an arm fault is detected in operations (e.g., GuardedMove) other than Grind operation
     else if (has_arm_fault)
     {
       ROS_INFO_STREAM("[Analysis Node] An arm fault is notified during an arm operation other than Grind. Update the runtime information by removing the current excavation location.");
- 
       terminate_current_plan();
-
-      // FIXME: here is for excavaion sceanrio only
+ 
       std::size_t pos = plan_aux_info.find(","); // pos is the location of first, ","
       std::string aux_info = plan_aux_info.substr(7, pos-7); // the ID of excavation location
       std::string action = "Remove";
@@ -501,7 +500,7 @@ void AdaptationAnalyzer::adaptation_analysis()
       adpt_inst_pub.publish(adpt_inst);
     }
   }
-  else // The lander is in active mode due to a previously detected earthquake
+  else // The lander is in inactive mode due to a previously detected earthquake
   {
     if (vibration_level == 0) // the earthquake has gone
     {

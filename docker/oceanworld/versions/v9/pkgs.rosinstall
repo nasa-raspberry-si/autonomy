@@ -1,22 +1,25 @@
 ## Top-level repo and ROS/Gazebo packages
 - git:
     local-name: ow_simulator
-    uri: 'https://github.com/nasa/ow_simulator'
+    uri: 'https://github.com/nasa-raspberry-si/ow_simulator.git'
+    version: 'ow9'
 
 ## Gazebo world files and the big data that accompanies them
 - git:
     local-name: ow_europa       
-    uri: 'https://github.com/nasa/ow_europa'                         
+    uri: 'https://github.com/nasa-raspberry-si/ow_europa'
+    version: 'ow9'
 
-## Autonomy
+## PLEXIL Executive for OceanWATERS testbeds
 - git:  
     local-name: ow_autonomy     
-    uri: 'https://github.com/nasa/ow_autonomy'                       
+    uri: 'https://github.com/nasa-raspberry-si/ow_autonomy'
+    version: 'ow9'
 
 ## misc
 - git:
     local-name: irg_open
-    uri: 'https://github.com/nasa/irg_open'
-
+    uri: 'https://github.com/nasa-raspberry-si/irg_open'
+    version: 'ow9'
 
 

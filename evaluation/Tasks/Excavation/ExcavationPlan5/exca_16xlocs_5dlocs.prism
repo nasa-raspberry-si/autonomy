@@ -1,0 +1,885 @@
+// autonomy-excavate
+// RASPBERRY-SI Planning model prototype for Ocean Worlds Autonomy Testbed
+// Javier Camara, Univerity of York
+// javier.camaramoreno@york.ac.uk
+
+mdp
+
+
+ // Number of excavation locations
+ // Number of dump locations
+
+// Parameters
+const curLoc=22; // Current location of arm when planner is called (here we have a hardcoded value, but this will be provided to the planner)
+
+// Special Locations
+const locOrig=0;
+const locNull=21+100; // Only auxiliary constants to define the range of variable loc
+
+// Excavation Locations
+const xloc1=1;
+const xloc2=2;
+const xloc3=3;
+const xloc4=4;
+const xloc5=5;
+const xloc6=6;
+const xloc7=7;
+const xloc8=8;
+const xloc9=9;
+const xloc10=10;
+const xloc11=11;
+const xloc12=12;
+const xloc13=13;
+const xloc14=14;
+const xloc15=15;
+const xloc16=16;
+
+// Dump Locations
+const dloc1=17;
+const dloc2=18;
+const dloc3=19;
+const dloc4=20;
+const dloc5=21;
+
+
+// Possible states of the mission (to keep track of progress)
+const START=0;
+const DONE_EXCAVATING=1;
+const DONE_DUMPING=2;
+const FAILED=100;
+
+formula tried_all_xloc =  tried_xloc1 &  tried_xloc2 &  tried_xloc3 &  tried_xloc4 &  tried_xloc5 &  tried_xloc6 &  tried_xloc7 &  tried_xloc8 &  tried_xloc9 &  tried_xloc10 &  tried_xloc11 &  tried_xloc12 &  tried_xloc13 &  tried_xloc14 &  tried_xloc15 &  tried_xloc16 &  true; // Have we tried all excavation locations?
+//const int MAX_TRIED; // Maximum number of excavation attempts (can be 1 by default, number of excavation locations upper bound)
+
+// Module that is in charge of selecting an excavation location
+// It tries one location first, and if it does not succeed, it goes to the next one.
+// If all locations have been tried and state is still START (unsuccessful excavation), it fails
+module autonomy
+	s:[START..FAILED] init START; // State of mission
+	loc:[locOrig..locNull] init curLoc;
+	tried:[0..MAX_TRIED] init 0; // Keeps track of excavation attempts
+
+	
+	tried_xloc1: bool init false;
+	succ_xloc1: bool init false;
+	tried_xloc2: bool init false;
+	succ_xloc2: bool init false;
+	tried_xloc3: bool init false;
+	succ_xloc3: bool init false;
+	tried_xloc4: bool init false;
+	succ_xloc4: bool init false;
+	tried_xloc5: bool init false;
+	succ_xloc5: bool init false;
+	tried_xloc6: bool init false;
+	succ_xloc6: bool init false;
+	tried_xloc7: bool init false;
+	succ_xloc7: bool init false;
+	tried_xloc8: bool init false;
+	succ_xloc8: bool init false;
+	tried_xloc9: bool init false;
+	succ_xloc9: bool init false;
+	tried_xloc10: bool init false;
+	succ_xloc10: bool init false;
+	tried_xloc11: bool init false;
+	succ_xloc11: bool init false;
+	tried_xloc12: bool init false;
+	succ_xloc12: bool init false;
+	tried_xloc13: bool init false;
+	succ_xloc13: bool init false;
+	tried_xloc14: bool init false;
+	succ_xloc14: bool init false;
+	tried_xloc15: bool init false;
+	succ_xloc15: bool init false;
+	tried_xloc16: bool init false;
+	succ_xloc16: bool init false;
+
+	// Excavation behavior
+	// In the following commands, we have:
+	// Command 1:
+	// * A guard that checks: (1) that we are at the START of the mission
+	// 			  (2) that we have not tried to excavate location A
+	//			  (3) that the maximum number of excavation attempts has not been reached
+	// * An update with probability ex_locA (excavatability of excavation location A) that:
+	//			  (1) updates the variable saying that we have tried location A (not needed but left for clarity)
+	// 			  (2) updates the variable that keeps track of excavation attempts
+	//			  (3) updates the arm location variable to location A
+	//            (4) updates the variable for excavation success in the current location to true	
+	// * Another update with probability 1-ex_locA that:
+	//			  (1) updates the variable saying that we have tried location A
+	//			  (2) updates the arm location variable to location A (even if we have not succeeded excavating)
+	// 			  (3) updates the variable that keeps track of excavation attempts
+	// Command 2:
+	// * A guard that checks: (1) that there is success in the current excavation location
+	// * An update that: (1) sets the excavation success back to false
+   	//			         (2) updates the state to successful excavation (DONE_EXCAVATING)
+
+	
+	[try_xloc1] (s=START) & (!tried_xloc1) & (tried<MAX_TRIED) -> ex_loc1: (s'=DONE_EXCAVATING) & (tried_xloc1'=true) &  (tried'=tried+1)  & (loc'=xloc1) & (succ_xloc1'=true) 
+				  	       + (1-ex_loc1): (tried_xloc1'=true) &  (tried'=tried+1) & (loc'=xloc1);
+	[select_xloc1] (succ_xloc1) -> (succ_xloc1'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc2] (s=START) & (!tried_xloc2) & (tried<MAX_TRIED) -> ex_loc2: (s'=DONE_EXCAVATING) & (tried_xloc2'=true) &  (tried'=tried+1)  & (loc'=xloc2) & (succ_xloc2'=true) 
+				  	       + (1-ex_loc2): (tried_xloc2'=true) &  (tried'=tried+1) & (loc'=xloc2);
+	[select_xloc2] (succ_xloc2) -> (succ_xloc2'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc3] (s=START) & (!tried_xloc3) & (tried<MAX_TRIED) -> ex_loc3: (s'=DONE_EXCAVATING) & (tried_xloc3'=true) &  (tried'=tried+1)  & (loc'=xloc3) & (succ_xloc3'=true) 
+				  	       + (1-ex_loc3): (tried_xloc3'=true) &  (tried'=tried+1) & (loc'=xloc3);
+	[select_xloc3] (succ_xloc3) -> (succ_xloc3'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc4] (s=START) & (!tried_xloc4) & (tried<MAX_TRIED) -> ex_loc4: (s'=DONE_EXCAVATING) & (tried_xloc4'=true) &  (tried'=tried+1)  & (loc'=xloc4) & (succ_xloc4'=true) 
+				  	       + (1-ex_loc4): (tried_xloc4'=true) &  (tried'=tried+1) & (loc'=xloc4);
+	[select_xloc4] (succ_xloc4) -> (succ_xloc4'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc5] (s=START) & (!tried_xloc5) & (tried<MAX_TRIED) -> ex_loc5: (s'=DONE_EXCAVATING) & (tried_xloc5'=true) &  (tried'=tried+1)  & (loc'=xloc5) & (succ_xloc5'=true) 
+				  	       + (1-ex_loc5): (tried_xloc5'=true) &  (tried'=tried+1) & (loc'=xloc5);
+	[select_xloc5] (succ_xloc5) -> (succ_xloc5'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc6] (s=START) & (!tried_xloc6) & (tried<MAX_TRIED) -> ex_loc6: (s'=DONE_EXCAVATING) & (tried_xloc6'=true) &  (tried'=tried+1)  & (loc'=xloc6) & (succ_xloc6'=true) 
+				  	       + (1-ex_loc6): (tried_xloc6'=true) &  (tried'=tried+1) & (loc'=xloc6);
+	[select_xloc6] (succ_xloc6) -> (succ_xloc6'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc7] (s=START) & (!tried_xloc7) & (tried<MAX_TRIED) -> ex_loc7: (s'=DONE_EXCAVATING) & (tried_xloc7'=true) &  (tried'=tried+1)  & (loc'=xloc7) & (succ_xloc7'=true) 
+				  	       + (1-ex_loc7): (tried_xloc7'=true) &  (tried'=tried+1) & (loc'=xloc7);
+	[select_xloc7] (succ_xloc7) -> (succ_xloc7'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc8] (s=START) & (!tried_xloc8) & (tried<MAX_TRIED) -> ex_loc8: (s'=DONE_EXCAVATING) & (tried_xloc8'=true) &  (tried'=tried+1)  & (loc'=xloc8) & (succ_xloc8'=true) 
+				  	       + (1-ex_loc8): (tried_xloc8'=true) &  (tried'=tried+1) & (loc'=xloc8);
+	[select_xloc8] (succ_xloc8) -> (succ_xloc8'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc9] (s=START) & (!tried_xloc9) & (tried<MAX_TRIED) -> ex_loc9: (s'=DONE_EXCAVATING) & (tried_xloc9'=true) &  (tried'=tried+1)  & (loc'=xloc9) & (succ_xloc9'=true) 
+				  	       + (1-ex_loc9): (tried_xloc9'=true) &  (tried'=tried+1) & (loc'=xloc9);
+	[select_xloc9] (succ_xloc9) -> (succ_xloc9'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc10] (s=START) & (!tried_xloc10) & (tried<MAX_TRIED) -> ex_loc10: (s'=DONE_EXCAVATING) & (tried_xloc10'=true) &  (tried'=tried+1)  & (loc'=xloc10) & (succ_xloc10'=true) 
+				  	       + (1-ex_loc10): (tried_xloc10'=true) &  (tried'=tried+1) & (loc'=xloc10);
+	[select_xloc10] (succ_xloc10) -> (succ_xloc10'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc11] (s=START) & (!tried_xloc11) & (tried<MAX_TRIED) -> ex_loc11: (s'=DONE_EXCAVATING) & (tried_xloc11'=true) &  (tried'=tried+1)  & (loc'=xloc11) & (succ_xloc11'=true) 
+				  	       + (1-ex_loc11): (tried_xloc11'=true) &  (tried'=tried+1) & (loc'=xloc11);
+	[select_xloc11] (succ_xloc11) -> (succ_xloc11'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc12] (s=START) & (!tried_xloc12) & (tried<MAX_TRIED) -> ex_loc12: (s'=DONE_EXCAVATING) & (tried_xloc12'=true) &  (tried'=tried+1)  & (loc'=xloc12) & (succ_xloc12'=true) 
+				  	       + (1-ex_loc12): (tried_xloc12'=true) &  (tried'=tried+1) & (loc'=xloc12);
+	[select_xloc12] (succ_xloc12) -> (succ_xloc12'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc13] (s=START) & (!tried_xloc13) & (tried<MAX_TRIED) -> ex_loc13: (s'=DONE_EXCAVATING) & (tried_xloc13'=true) &  (tried'=tried+1)  & (loc'=xloc13) & (succ_xloc13'=true) 
+				  	       + (1-ex_loc13): (tried_xloc13'=true) &  (tried'=tried+1) & (loc'=xloc13);
+	[select_xloc13] (succ_xloc13) -> (succ_xloc13'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc14] (s=START) & (!tried_xloc14) & (tried<MAX_TRIED) -> ex_loc14: (s'=DONE_EXCAVATING) & (tried_xloc14'=true) &  (tried'=tried+1)  & (loc'=xloc14) & (succ_xloc14'=true) 
+				  	       + (1-ex_loc14): (tried_xloc14'=true) &  (tried'=tried+1) & (loc'=xloc14);
+	[select_xloc14] (succ_xloc14) -> (succ_xloc14'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc15] (s=START) & (!tried_xloc15) & (tried<MAX_TRIED) -> ex_loc15: (s'=DONE_EXCAVATING) & (tried_xloc15'=true) &  (tried'=tried+1)  & (loc'=xloc15) & (succ_xloc15'=true) 
+				  	       + (1-ex_loc15): (tried_xloc15'=true) &  (tried'=tried+1) & (loc'=xloc15);
+	[select_xloc15] (succ_xloc15) -> (succ_xloc15'=false) & (s'=DONE_EXCAVATING);
+	[try_xloc16] (s=START) & (!tried_xloc16) & (tried<MAX_TRIED) -> ex_loc16: (s'=DONE_EXCAVATING) & (tried_xloc16'=true) &  (tried'=tried+1)  & (loc'=xloc16) & (succ_xloc16'=true) 
+				  	       + (1-ex_loc16): (tried_xloc16'=true) &  (tried'=tried+1) & (loc'=xloc16);
+	[select_xloc16] (succ_xloc16) -> (succ_xloc16'=false) & (s'=DONE_EXCAVATING);
+
+	
+	// If all excavation locations have been tried (or maximum number of excavation attempts has been reached) and state is not DONE_EXCAVATING, mission fails
+	[] (s=START) & (tried_all_xloc | tried>= MAX_TRIED) -> (s'=FAILED); 
+
+	// Dump behavior
+	// These commands just update the state to DONE_DUMPING (no probability of failure), and update arm location
+
+	[select_dloc1] (s=DONE_EXCAVATING) -> (s'=DONE_DUMPING) & (loc'=dloc1);
+	[select_dloc2] (s=DONE_EXCAVATING) -> (s'=DONE_DUMPING) & (loc'=dloc2);
+	[select_dloc3] (s=DONE_EXCAVATING) -> (s'=DONE_DUMPING) & (loc'=dloc3);
+	[select_dloc4] (s=DONE_EXCAVATING) -> (s'=DONE_DUMPING) & (loc'=dloc4);
+	[select_dloc5] (s=DONE_EXCAVATING) -> (s'=DONE_DUMPING) & (loc'=dloc5);
+
+
+endmodule
+
+
+// stopping condition label for PCTL formula checking
+label "done" = (s=DONE_DUMPING);
+
+
+
+// Script-generated rewards and constants start here
+
+
+// Science value reward
+// The estimated science value for the different excavation locations has to be provided by a different model
+rewards "SV"
+	[select_xloc1] true: 0.9788;
+	[select_xloc2] true: 0.6469;
+	[select_xloc3] true: 0.6728;
+	[select_xloc4] true: 0.8895;
+	[select_xloc5] true: 0.3284;
+	[select_xloc6] true: 0.2898;
+	[select_xloc7] true: 0.8823;
+	[select_xloc8] true: 0.9496;
+	[select_xloc9] true: 0.2312;
+	[select_xloc10] true: 0.2407;
+	[select_xloc11] true: 0.3153;
+	[select_xloc12] true: 0.9097;
+	[select_xloc13] true: 0.3887;
+	[select_xloc14] true: 0.7427;
+	[select_xloc15] true: 0.9699;
+	[select_xloc16] true: 0.9943;
+endrewards
+
+// Energy consumption cost
+// The values for the energy costs have to be provided by a different model
+// the reward structure below considers both the cost of excavation and moving to the arm to a location
+// the cost of excavation is fixed, but the cost of movement from another location varies, depending on the
+// original location of the arm (there is one line of the reward structure per alternative original location
+// NOTE: cost of moving the arm A->B and B<-A are the same here, but these costs might be different due to different
+// trajectories computed by lower-level control
+
+rewards "EC"
+	[select_xloc2] loc=xloc1 :0.23259406699226012;
+	[select_xloc3] loc=xloc1 :0.7502666192761077;
+	[select_xloc4] loc=xloc1 :0.21470910553583883;
+	[select_xloc5] loc=xloc1 :0.8475848040166837;
+	[select_xloc6] loc=xloc1 :0.5024937810560445;
+	[select_xloc7] loc=xloc1 :0.8475848040166837;
+	[select_xloc8] loc=xloc1 :0.6029925372672534;
+	[select_xloc9] loc=xloc1 :0.6539113089708726;
+	[select_xloc10] loc=xloc1 :0.34481879299133333;
+	[select_xloc11] loc=xloc1 :0.4019950248448356;
+	[select_xloc12] loc=xloc1 :0.2690724809414742;
+	[select_xloc13] loc=xloc1 :0.8039900496896712;
+	[select_xloc14] loc=xloc1 :0.21470910553583883;
+	[select_xloc15] loc=xloc1 :0.4019950248448356;
+	[select_xloc16] loc=xloc1 :0.1004987562112089;
+	[select_dloc1] loc=xloc1 :0.19999999999999996;
+	[select_dloc2] loc=xloc1 :0.5024937810560445;
+	[select_dloc3] loc=xloc1 :0.46647615158762407;
+	[select_dloc4] loc=xloc1 :0.7502666192761077;
+	[select_dloc5] loc=xloc1 :0.2973213749463701;
+	[select_xloc1] loc=xloc2 :0.23259406699226012;
+	[select_xloc3] loc=xloc2 :0.6029925372672534;
+	[select_xloc4] loc=xloc2 :0.44721359549995787;
+	[select_xloc5] loc=xloc2 :0.7034912934784624;
+	[select_xloc6] loc=xloc2 :0.43081318457076034;
+	[select_xloc7] loc=xloc2 :0.9027181176868004;
+	[select_xloc8] loc=xloc2 :0.7158910531638176;
+	[select_xloc9] loc=xloc2 :0.5024937810560445;
+	[select_xloc10] loc=xloc2 :0.5517245689653488;
+	[select_xloc11] loc=xloc2 :0.34481879299133333;
+	[select_xloc12] loc=xloc2 :0.4026164427839478;
+	[select_xloc13] loc=xloc2 :0.9093404203047393;
+	[select_xloc14] loc=xloc2 :0.3999999999999999;
+	[select_xloc15] loc=xloc2 :0.5281098370604357;
+	[select_xloc16] loc=xloc2 :0.19999999999999996;
+	[select_dloc1] loc=xloc2 :0.4220189569201838;
+	[select_dloc2] loc=xloc2 :0.6209669878504009;
+	[select_dloc3] loc=xloc2 :0.3014962686336267;
+	[select_dloc4] loc=xloc2 :0.8022468448052631;
+	[select_dloc5] loc=xloc2 :0.1004987562112089;
+	[select_xloc1] loc=xloc3 :0.7502666192761077;
+	[select_xloc2] loc=xloc3 :0.6029925372672534;
+	[select_xloc4] loc=xloc3 :0.9228217596047461;
+	[select_xloc5] loc=xloc3 :0.10049875621120899;
+	[select_xloc6] loc=xloc3 :0.29732137494637007;
+	[select_xloc7] loc=xloc3 :1.5000333329629714;
+	[select_xloc8] loc=xloc3 :1.3168523075880603;
+	[select_xloc9] loc=xloc3 :0.10049875621120888;
+	[select_xloc10] loc=xloc3 :1.092520022699813;
+	[select_xloc11] loc=xloc3 :0.3780211634287159;
+	[select_xloc12] loc=xloc3 :0.6726812023536854;
+	[select_xloc13] loc=xloc3 :1.511985449665439;
+	[select_xloc14] loc=xloc3 :0.7560423268574319;
+	[select_xloc15] loc=xloc3 :1.1237882362794158;
+	[select_xloc16] loc=xloc3 :0.6539113089708726;
+	[select_dloc1] loc=xloc3 :0.8431488599292535;
+	[select_dloc2] loc=xloc3 :1.22;
+	[select_dloc3] loc=xloc3 :0.3014962686336266;
+	[select_dloc4] loc=xloc3 :1.4;
+	[select_dloc5] loc=xloc3 :0.5024937810560445;
+	[select_xloc1] loc=xloc4 :0.21470910553583883;
+	[select_xloc2] loc=xloc4 :0.44721359549995787;
+	[select_xloc3] loc=xloc4 :0.9228217596047461;
+	[select_xloc5] loc=xloc4 :1.015332457867865;
+	[select_xloc6] loc=xloc4 :0.6462197768561405;
+	[select_xloc7] loc=xloc4 :0.8431488599292536;
+	[select_xloc8] loc=xloc4 :0.5590169943749475;
+	[select_xloc9] loc=xloc4 :0.8321658488546618;
+	[select_xloc10] loc=xloc4 :0.20099751242241778;
+	[select_xloc11] loc=xloc4 :0.5503635162326805;
+	[select_xloc12] loc=xloc4 :0.3001666203960727;
+	[select_xloc13] loc=xloc4 :0.7502666192761078;
+	[select_xloc14] loc=xloc4 :0.2;
+	[select_xloc15] loc=xloc4 :0.378021163428716;
+	[select_xloc16] loc=xloc4 :0.282842712474619;
+	[select_dloc1] loc=xloc4 :0.1004987562112089;
+	[select_dloc2] loc=xloc4 :0.46647615158762407;
+	[select_dloc3] loc=xloc4 :0.6594694837519018;
+	[select_dloc4] loc=xloc4 :0.7560423268574319;
+	[select_dloc5] loc=xloc4 :0.5080354318352215;
+	[select_xloc1] loc=xloc5 :0.8475848040166837;
+	[select_xloc2] loc=xloc5 :0.7034912934784624;
+	[select_xloc3] loc=xloc5 :0.10049875621120899;
+	[select_xloc4] loc=xloc5 :1.015332457867865;
+	[select_xloc6] loc=xloc5 :0.378021163428716;
+	[select_xloc7] loc=xloc5 :1.6;
+	[select_xloc8] loc=xloc5 :1.4171802990445497;
+	[select_xloc9] loc=xloc5 :0.20099751242241787;
+	[select_xloc10] loc=xloc5 :1.1884864324004714;
+	[select_xloc11] loc=xloc5 :0.46647615158762407;
+	[select_xloc12] loc=xloc5 :0.756042326857432;
+	[select_xloc13] loc=xloc5 :1.61245154965971;
+	[select_xloc14] loc=xloc5 :0.8431488599292536;
+	[select_xloc15] loc=xloc5 :1.2237646832622686;
+	[select_xloc16] loc=xloc5 :0.7502666192761078;
+	[select_dloc1] loc=xloc5 :0.9329523031752481;
+	[select_dloc2] loc=xloc5 :1.3201893803541975;
+	[select_dloc3] loc=xloc5 :0.4019950248448356;
+	[select_dloc4] loc=xloc5 :1.5000333329629714;
+	[select_dloc5] loc=xloc5 :0.6029925372672534;
+	[select_xloc1] loc=xloc6 :0.5024937810560445;
+	[select_xloc2] loc=xloc6 :0.43081318457076034;
+	[select_xloc3] loc=xloc6 :0.29732137494637007;
+	[select_xloc4] loc=xloc6 :0.6462197768561405;
+	[select_xloc5] loc=xloc6 :0.378021163428716;
+	[select_xloc7] loc=xloc6 :1.3201893803541975;
+	[select_xloc8] loc=xloc6 :1.10004545360635;
+	[select_xloc9] loc=xloc6 :0.2325940669922601;
+	[select_xloc10] loc=xloc6 :0.8296987405076617;
+	[select_xloc11] loc=xloc6 :0.10049875621120888;
+	[select_xloc12] loc=xloc6 :0.37802116342871595;
+	[select_xloc13] loc=xloc6 :1.3003461077728498;
+	[select_xloc14] loc=xloc6 :0.46647615158762407;
+	[select_xloc15] loc=xloc6 :0.9000555538409838;
+	[select_xloc16] loc=xloc6 :0.4019950248448356;
+	[select_dloc1] loc=xloc6 :0.5590169943749475;
+	[select_dloc2] loc=xloc6 :1.0;
+	[select_dloc3] loc=xloc6 :0.21470910553583883;
+	[select_dloc4] loc=xloc6 :1.22;
+	[select_dloc5] loc=xloc6 :0.34481879299133333;
+	[select_xloc1] loc=xloc7 :0.8475848040166837;
+	[select_xloc2] loc=xloc7 :0.9027181176868004;
+	[select_xloc3] loc=xloc7 :1.5000333329629714;
+	[select_xloc4] loc=xloc7 :0.8431488599292536;
+	[select_xloc5] loc=xloc7 :1.6;
+	[select_xloc6] loc=xloc7 :1.3201893803541975;
+	[select_xloc8] loc=xloc7 :0.2973213749463701;
+	[select_xloc9] loc=xloc7 :1.4001428498549708;
+	[select_xloc10] loc=xloc7 :0.6726812023536854;
+	[select_xloc11] loc=xloc7 :1.2237646832622686;
+	[select_xloc12] loc=xloc7 :1.100727032465361;
+	[select_xloc13] loc=xloc7 :0.19999999999999996;
+	[select_xloc14] loc=xloc7 :1.015332457867865;
+	[select_xloc15] loc=xloc7 :0.46647615158762407;
+	[select_xloc16] loc=xloc7 :0.9396275858019495;
+	[select_dloc1] loc=xloc7 :0.9329523031752481;
+	[select_dloc2] loc=xloc7 :0.378021163428716;
+	[select_dloc3] loc=xloc7 :1.200666481584291;
+	[select_dloc4] loc=xloc7 :0.10049875621120899;
+	[select_dloc5] loc=xloc7 :1.0017983829094554;
+	[select_xloc1] loc=xloc8 :0.6029925372672534;
+	[select_xloc2] loc=xloc8 :0.7158910531638176;
+	[select_xloc3] loc=xloc8 :1.3168523075880603;
+	[select_xloc4] loc=xloc8 :0.5590169943749475;
+	[select_xloc5] loc=xloc8 :1.4171802990445497;
+	[select_xloc6] loc=xloc8 :1.10004545360635;
+	[select_xloc7] loc=xloc8 :0.2973213749463701;
+	[select_xloc9] loc=xloc8 :1.2165525060596438;
+	[select_xloc10] loc=xloc8 :0.37802116342871595;
+	[select_xloc11] loc=xloc8 :1.000199980003999;
+	[select_xloc12] loc=xloc8 :0.835224520712844;
+	[select_xloc13] loc=xloc8 :0.20099751242241787;
+	[select_xloc14] loc=xloc8 :0.7433034373659253;
+	[select_xloc15] loc=xloc8 :0.20099751242241776;
+	[select_xloc16] loc=xloc8 :0.70178344238091;
+	[select_dloc1] loc=xloc8 :0.6539113089708726;
+	[select_dloc2] loc=xloc8 :0.10049875621120888;
+	[select_dloc3] loc=xloc8 :1.016070863670443;
+	[select_dloc4] loc=xloc8 :0.2325940669922601;
+	[select_dloc5] loc=xloc8 :0.8158431221748457;
+	[select_xloc1] loc=xloc9 :0.6539113089708726;
+	[select_xloc2] loc=xloc9 :0.5024937810560445;
+	[select_xloc3] loc=xloc9 :0.10049875621120888;
+	[select_xloc4] loc=xloc9 :0.8321658488546618;
+	[select_xloc5] loc=xloc9 :0.20099751242241787;
+	[select_xloc6] loc=xloc9 :0.2325940669922601;
+	[select_xloc7] loc=xloc9 :1.4001428498549708;
+	[select_xloc8] loc=xloc9 :1.2165525060596438;
+	[select_xloc10] loc=xloc9 :0.9974467404327911;
+	[select_xloc11] loc=xloc9 :0.29732137494637007;
+	[select_xloc12] loc=xloc9 :0.5946427498927401;
+	[select_xloc13] loc=xloc9 :1.411523999087511;
+	[select_xloc14] loc=xloc9 :0.6726812023536854;
+	[select_xloc15] loc=xloc9 :1.0239140588936164;
+	[select_xloc16] loc=xloc9 :0.5590169943749475;
+	[select_dloc1] loc=xloc9 :0.7560423268574319;
+	[select_dloc2] loc=xloc9 :1.119866063420086;
+	[select_dloc3] loc=xloc9 :0.20099751242241776;
+	[select_dloc4] loc=xloc9 :1.3000384609695206;
+	[select_dloc5] loc=xloc9 :0.40199502484483557;
+	[select_xloc1] loc=xloc10 :0.34481879299133333;
+	[select_xloc2] loc=xloc10 :0.5517245689653488;
+	[select_xloc3] loc=xloc10 :1.092520022699813;
+	[select_xloc4] loc=xloc10 :0.20099751242241778;
+	[select_xloc5] loc=xloc10 :1.1884864324004714;
+	[select_xloc6] loc=xloc10 :0.8296987405076617;
+	[select_xloc7] loc=xloc10 :0.6726812023536854;
+	[select_xloc8] loc=xloc10 :0.37802116342871595;
+	[select_xloc9] loc=xloc10 :0.9974467404327911;
+	[select_xloc11] loc=xloc10 :0.7308214556237385;
+	[select_xloc12] loc=xloc10 :0.5000999900019995;
+	[select_xloc13] loc=xloc10 :0.5590169943749475;
+	[select_xloc14] loc=xloc10 :0.4004996878900158;
+	[select_xloc15] loc=xloc10 :0.23259406699226012;
+	[select_xloc16] loc=xloc10 :0.4386342439892262;
+	[select_dloc1] loc=xloc10 :0.3014962686336267;
+	[select_dloc2] loc=xloc10 :0.2973213749463701;
+	[select_dloc3] loc=xloc10 :0.8112336284942827;
+	[select_dloc4] loc=xloc10 :0.5946427498927401;
+	[select_dloc5] loc=xloc10 :0.6341135544995076;
+	[select_xloc1] loc=xloc11 :0.4019950248448356;
+	[select_xloc2] loc=xloc11 :0.34481879299133333;
+	[select_xloc3] loc=xloc11 :0.3780211634287159;
+	[select_xloc4] loc=xloc11 :0.5503635162326805;
+	[select_xloc5] loc=xloc11 :0.46647615158762407;
+	[select_xloc6] loc=xloc11 :0.10049875621120888;
+	[select_xloc7] loc=xloc11 :1.2237646832622686;
+	[select_xloc8] loc=xloc11 :1.000199980003999;
+	[select_xloc9] loc=xloc11 :0.29732137494637007;
+	[select_xloc10] loc=xloc11 :0.7308214556237385;
+	[select_xloc12] loc=xloc11 :0.2973213749463701;
+	[select_xloc13] loc=xloc11 :1.200666481584291;
+	[select_xloc14] loc=xloc11 :0.378021163428716;
+	[select_xloc15] loc=xloc11 :0.8;
+	[select_xloc16] loc=xloc11 :0.3014962686336267;
+	[select_dloc1] loc=xloc11 :0.46647615158762407;
+	[select_dloc2] loc=xloc11 :0.9000555538409838;
+	[select_dloc3] loc=xloc11 :0.19999999999999996;
+	[select_dloc4] loc=xloc11 :1.1237882362794158;
+	[select_dloc5] loc=xloc11 :0.2690724809414742;
+	[select_xloc1] loc=xloc12 :0.2690724809414742;
+	[select_xloc2] loc=xloc12 :0.4026164427839478;
+	[select_xloc3] loc=xloc12 :0.6726812023536854;
+	[select_xloc4] loc=xloc12 :0.3001666203960727;
+	[select_xloc5] loc=xloc12 :0.756042326857432;
+	[select_xloc6] loc=xloc12 :0.37802116342871595;
+	[select_xloc7] loc=xloc12 :1.100727032465361;
+	[select_xloc8] loc=xloc12 :0.835224520712844;
+	[select_xloc9] loc=xloc12 :0.5946427498927401;
+	[select_xloc10] loc=xloc12 :0.5000999900019995;
+	[select_xloc11] loc=xloc12 :0.2973213749463701;
+	[select_xloc13] loc=xloc12 :1.0332473082471592;
+	[select_xloc14] loc=xloc12 :0.1004987562112089;
+	[select_xloc15] loc=xloc12 :0.6390618123468184;
+	[select_xloc16] loc=xloc12 :0.21470910553583883;
+	[select_dloc1] loc=xloc12 :0.2009975124224178;
+	[select_dloc2] loc=xloc12 :0.7368174807915457;
+	[select_dloc3] loc=xloc12 :0.46518813398452025;
+	[select_dloc4] loc=xloc12 :1.0062305898749053;
+	[select_dloc5] loc=xloc12 :0.3999999999999999;
+	[select_xloc1] loc=xloc13 :0.8039900496896712;
+	[select_xloc2] loc=xloc13 :0.9093404203047393;
+	[select_xloc3] loc=xloc13 :1.511985449665439;
+	[select_xloc4] loc=xloc13 :0.7502666192761078;
+	[select_xloc5] loc=xloc13 :1.61245154965971;
+	[select_xloc6] loc=xloc13 :1.3003461077728498;
+	[select_xloc7] loc=xloc13 :0.19999999999999996;
+	[select_xloc8] loc=xloc13 :0.20099751242241787;
+	[select_xloc9] loc=xloc13 :1.411523999087511;
+	[select_xloc10] loc=xloc13 :0.5590169943749475;
+	[select_xloc11] loc=xloc13 :1.200666481584291;
+	[select_xloc12] loc=xloc13 :1.0332473082471592;
+	[select_xloc14] loc=xloc13 :0.9396275858019495;
+	[select_xloc15] loc=xloc13 :0.4019950248448356;
+	[select_xloc16] loc=xloc13 :0.9027181176868004;
+	[select_dloc1] loc=xloc13 :0.8475848040166837;
+	[select_dloc2] loc=xloc13 :0.3014962686336267;
+	[select_dloc3] loc=xloc13 :1.2106196760337247;
+	[select_dloc4] loc=xloc13 :0.21470910553583888;
+	[select_dloc5] loc=xloc13 :1.009752444909147;
+	[select_xloc1] loc=xloc14 :0.21470910553583883;
+	[select_xloc2] loc=xloc14 :0.3999999999999999;
+	[select_xloc3] loc=xloc14 :0.7560423268574319;
+	[select_xloc4] loc=xloc14 :0.2;
+	[select_xloc5] loc=xloc14 :0.8431488599292536;
+	[select_xloc6] loc=xloc14 :0.46647615158762407;
+	[select_xloc7] loc=xloc14 :1.015332457867865;
+	[select_xloc8] loc=xloc14 :0.7433034373659253;
+	[select_xloc9] loc=xloc14 :0.6726812023536854;
+	[select_xloc10] loc=xloc14 :0.4004996878900158;
+	[select_xloc11] loc=xloc14 :0.378021163428716;
+	[select_xloc12] loc=xloc14 :0.1004987562112089;
+	[select_xloc13] loc=xloc14 :0.9396275858019495;
+	[select_xloc15] loc=xloc14 :0.5503635162326805;
+	[select_xloc16] loc=xloc14 :0.19999999999999996;
+	[select_dloc1] loc=xloc14 :0.1004987562112089;
+	[select_dloc2] loc=xloc14 :0.6462197768561405;
+	[select_dloc3] loc=xloc14 :0.5243090691567331;
+	[select_dloc4] loc=xloc14 :0.9228217596047461;
+	[select_dloc5] loc=xloc14 :0.4220189569201838;
+	[select_xloc1] loc=xloc15 :0.4019950248448356;
+	[select_xloc2] loc=xloc15 :0.5281098370604357;
+	[select_xloc3] loc=xloc15 :1.1237882362794158;
+	[select_xloc4] loc=xloc15 :0.378021163428716;
+	[select_xloc5] loc=xloc15 :1.2237646832622686;
+	[select_xloc6] loc=xloc15 :0.9000555538409838;
+	[select_xloc7] loc=xloc15 :0.46647615158762407;
+	[select_xloc8] loc=xloc15 :0.20099751242241776;
+	[select_xloc9] loc=xloc15 :1.0239140588936164;
+	[select_xloc10] loc=xloc15 :0.23259406699226012;
+	[select_xloc11] loc=xloc15 :0.8;
+	[select_xloc12] loc=xloc15 :0.6390618123468184;
+	[select_xloc13] loc=xloc15 :0.4019950248448356;
+	[select_xloc14] loc=xloc15 :0.5503635162326805;
+	[select_xloc16] loc=xloc15 :0.5008991914547277;
+	[select_dloc1] loc=xloc15 :0.46647615158762407;
+	[select_dloc2] loc=xloc15 :0.10049875621120888;
+	[select_dloc3] loc=xloc15 :0.8246211251235323;
+	[select_dloc4] loc=xloc15 :0.3780211634287159;
+	[select_dloc5] loc=xloc15 :0.6264183905346331;
+	[select_xloc1] loc=xloc16 :0.1004987562112089;
+	[select_xloc2] loc=xloc16 :0.19999999999999996;
+	[select_xloc3] loc=xloc16 :0.6539113089708726;
+	[select_xloc4] loc=xloc16 :0.282842712474619;
+	[select_xloc5] loc=xloc16 :0.7502666192761078;
+	[select_xloc6] loc=xloc16 :0.4019950248448356;
+	[select_xloc7] loc=xloc16 :0.9396275858019495;
+	[select_xloc8] loc=xloc16 :0.70178344238091;
+	[select_xloc9] loc=xloc16 :0.5590169943749475;
+	[select_xloc10] loc=xloc16 :0.4386342439892262;
+	[select_xloc11] loc=xloc16 :0.3014962686336267;
+	[select_xloc12] loc=xloc16 :0.21470910553583883;
+	[select_xloc13] loc=xloc16 :0.9027181176868004;
+	[select_xloc14] loc=xloc16 :0.19999999999999996;
+	[select_xloc15] loc=xloc16 :0.5008991914547277;
+	[select_dloc1] loc=xloc16 :0.23259406699226012;
+	[select_dloc2] loc=xloc16 :0.6013318551349163;
+	[select_dloc3] loc=xloc16 :0.378021163428716;
+	[select_dloc4] loc=xloc16 :0.8411896337925235;
+	[select_dloc5] loc=xloc16 :0.23259406699226012;
+endrewards
+
+rewards "T"
+	[select_xloc2] loc=xloc1 :4.651881339845202;
+	[select_xloc3] loc=xloc1 :15.005332385522154;
+	[select_xloc4] loc=xloc1 :4.294182110716776;
+	[select_xloc5] loc=xloc1 :16.951696080333672;
+	[select_xloc6] loc=xloc1 :10.04987562112089;
+	[select_xloc7] loc=xloc1 :16.951696080333672;
+	[select_xloc8] loc=xloc1 :12.059850745345068;
+	[select_xloc9] loc=xloc1 :13.078226179417452;
+	[select_xloc10] loc=xloc1 :6.896375859826667;
+	[select_xloc11] loc=xloc1 :8.039900496896713;
+	[select_xloc12] loc=xloc1 :5.381449618829484;
+	[select_xloc13] loc=xloc1 :16.079800993793427;
+	[select_xloc14] loc=xloc1 :4.294182110716776;
+	[select_xloc15] loc=xloc1 :8.039900496896713;
+	[select_xloc16] loc=xloc1 :2.0099751242241783;
+	[select_dloc1] loc=xloc1 :3.999999999999999;
+	[select_dloc2] loc=xloc1 :10.04987562112089;
+	[select_dloc3] loc=xloc1 :9.329523031752482;
+	[select_dloc4] loc=xloc1 :15.005332385522154;
+	[select_dloc5] loc=xloc1 :5.946427498927402;
+	[select_xloc1] loc=xloc2 :4.651881339845202;
+	[select_xloc3] loc=xloc2 :12.059850745345068;
+	[select_xloc4] loc=xloc2 :8.944271909999157;
+	[select_xloc5] loc=xloc2 :14.069825869569248;
+	[select_xloc6] loc=xloc2 :8.616263691415206;
+	[select_xloc7] loc=xloc2 :18.05436235373601;
+	[select_xloc8] loc=xloc2 :14.317821063276352;
+	[select_xloc9] loc=xloc2 :10.04987562112089;
+	[select_xloc10] loc=xloc2 :11.034491379306976;
+	[select_xloc11] loc=xloc2 :6.896375859826667;
+	[select_xloc12] loc=xloc2 :8.052328855678956;
+	[select_xloc13] loc=xloc2 :18.186808406094784;
+	[select_xloc14] loc=xloc2 :7.999999999999998;
+	[select_xloc15] loc=xloc2 :10.562196741208714;
+	[select_xloc16] loc=xloc2 :3.999999999999999;
+	[select_dloc1] loc=xloc2 :8.440379138403676;
+	[select_dloc2] loc=xloc2 :12.419339757008018;
+	[select_dloc3] loc=xloc2 :6.029925372672534;
+	[select_dloc4] loc=xloc2 :16.044936896105263;
+	[select_dloc5] loc=xloc2 :2.0099751242241783;
+	[select_xloc1] loc=xloc3 :15.005332385522154;
+	[select_xloc2] loc=xloc3 :12.059850745345068;
+	[select_xloc4] loc=xloc3 :18.456435192094922;
+	[select_xloc5] loc=xloc3 :2.0099751242241797;
+	[select_xloc6] loc=xloc3 :5.9464274989274015;
+	[select_xloc7] loc=xloc3 :30.000666659259426;
+	[select_xloc8] loc=xloc3 :26.337046151761207;
+	[select_xloc9] loc=xloc3 :2.0099751242241775;
+	[select_xloc10] loc=xloc3 :21.85040045399626;
+	[select_xloc11] loc=xloc3 :7.560423268574318;
+	[select_xloc12] loc=xloc3 :13.45362404707371;
+	[select_xloc13] loc=xloc3 :30.23970899330878;
+	[select_xloc14] loc=xloc3 :15.120846537148637;
+	[select_xloc15] loc=xloc3 :22.475764725588316;
+	[select_xloc16] loc=xloc3 :13.078226179417452;
+	[select_dloc1] loc=xloc3 :16.86297719858507;
+	[select_dloc2] loc=xloc3 :24.4;
+	[select_dloc3] loc=xloc3 :6.029925372672532;
+	[select_dloc4] loc=xloc3 :28.0;
+	[select_dloc5] loc=xloc3 :10.04987562112089;
+	[select_xloc1] loc=xloc4 :4.294182110716776;
+	[select_xloc2] loc=xloc4 :8.944271909999157;
+	[select_xloc3] loc=xloc4 :18.456435192094922;
+	[select_xloc5] loc=xloc4 :20.306649157357302;
+	[select_xloc6] loc=xloc4 :12.92439553712281;
+	[select_xloc7] loc=xloc4 :16.86297719858507;
+	[select_xloc8] loc=xloc4 :11.180339887498949;
+	[select_xloc9] loc=xloc4 :16.643316977093235;
+	[select_xloc10] loc=xloc4 :4.019950248448356;
+	[select_xloc11] loc=xloc4 :11.00727032465361;
+	[select_xloc12] loc=xloc4 :6.003332407921454;
+	[select_xloc13] loc=xloc4 :15.005332385522156;
+	[select_xloc14] loc=xloc4 :4.0;
+	[select_xloc15] loc=xloc4 :7.56042326857432;
+	[select_xloc16] loc=xloc4 :5.65685424949238;
+	[select_dloc1] loc=xloc4 :2.0099751242241783;
+	[select_dloc2] loc=xloc4 :9.329523031752482;
+	[select_dloc3] loc=xloc4 :13.189389675038036;
+	[select_dloc4] loc=xloc4 :15.120846537148637;
+	[select_dloc5] loc=xloc4 :10.16070863670443;
+	[select_xloc1] loc=xloc5 :16.951696080333672;
+	[select_xloc2] loc=xloc5 :14.069825869569248;
+	[select_xloc3] loc=xloc5 :2.0099751242241797;
+	[select_xloc4] loc=xloc5 :20.306649157357302;
+	[select_xloc6] loc=xloc5 :7.56042326857432;
+	[select_xloc7] loc=xloc5 :32.0;
+	[select_xloc8] loc=xloc5 :28.34360598089099;
+	[select_xloc9] loc=xloc5 :4.019950248448358;
+	[select_xloc10] loc=xloc5 :23.769728648009426;
+	[select_xloc11] loc=xloc5 :9.329523031752482;
+	[select_xloc12] loc=xloc5 :15.12084653714864;
+	[select_xloc13] loc=xloc5 :32.249030993194204;
+	[select_xloc14] loc=xloc5 :16.86297719858507;
+	[select_xloc15] loc=xloc5 :24.475293665245374;
+	[select_xloc16] loc=xloc5 :15.005332385522156;
+	[select_dloc1] loc=xloc5 :18.659046063504963;
+	[select_dloc2] loc=xloc5 :26.40378760708395;
+	[select_dloc3] loc=xloc5 :8.039900496896713;
+	[select_dloc4] loc=xloc5 :30.000666659259426;
+	[select_dloc5] loc=xloc5 :12.059850745345068;
+	[select_xloc1] loc=xloc6 :10.04987562112089;
+	[select_xloc2] loc=xloc6 :8.616263691415206;
+	[select_xloc3] loc=xloc6 :5.9464274989274015;
+	[select_xloc4] loc=xloc6 :12.92439553712281;
+	[select_xloc5] loc=xloc6 :7.56042326857432;
+	[select_xloc7] loc=xloc6 :26.40378760708395;
+	[select_xloc8] loc=xloc6 :22.000909072127;
+	[select_xloc9] loc=xloc6 :4.651881339845202;
+	[select_xloc10] loc=xloc6 :16.593974810153235;
+	[select_xloc11] loc=xloc6 :2.0099751242241775;
+	[select_xloc12] loc=xloc6 :7.5604232685743185;
+	[select_xloc13] loc=xloc6 :26.006922155456994;
+	[select_xloc14] loc=xloc6 :9.329523031752482;
+	[select_xloc15] loc=xloc6 :18.001111076819676;
+	[select_xloc16] loc=xloc6 :8.039900496896713;
+	[select_dloc1] loc=xloc6 :11.180339887498949;
+	[select_dloc2] loc=xloc6 :20.0;
+	[select_dloc3] loc=xloc6 :4.294182110716776;
+	[select_dloc4] loc=xloc6 :24.4;
+	[select_dloc5] loc=xloc6 :6.896375859826667;
+	[select_xloc1] loc=xloc7 :16.951696080333672;
+	[select_xloc2] loc=xloc7 :18.05436235373601;
+	[select_xloc3] loc=xloc7 :30.000666659259426;
+	[select_xloc4] loc=xloc7 :16.86297719858507;
+	[select_xloc5] loc=xloc7 :32.0;
+	[select_xloc6] loc=xloc7 :26.40378760708395;
+	[select_xloc8] loc=xloc7 :5.946427498927402;
+	[select_xloc9] loc=xloc7 :28.002856997099418;
+	[select_xloc10] loc=xloc7 :13.45362404707371;
+	[select_xloc11] loc=xloc7 :24.475293665245374;
+	[select_xloc12] loc=xloc7 :22.01454064930722;
+	[select_xloc13] loc=xloc7 :3.999999999999999;
+	[select_xloc14] loc=xloc7 :20.306649157357302;
+	[select_xloc15] loc=xloc7 :9.329523031752482;
+	[select_xloc16] loc=xloc7 :18.79255171603899;
+	[select_dloc1] loc=xloc7 :18.659046063504963;
+	[select_dloc2] loc=xloc7 :7.56042326857432;
+	[select_dloc3] loc=xloc7 :24.013329631685817;
+	[select_dloc4] loc=xloc7 :2.0099751242241797;
+	[select_dloc5] loc=xloc7 :20.035967658189108;
+	[select_xloc1] loc=xloc8 :12.059850745345068;
+	[select_xloc2] loc=xloc8 :14.317821063276352;
+	[select_xloc3] loc=xloc8 :26.337046151761207;
+	[select_xloc4] loc=xloc8 :11.180339887498949;
+	[select_xloc5] loc=xloc8 :28.34360598089099;
+	[select_xloc6] loc=xloc8 :22.000909072127;
+	[select_xloc7] loc=xloc8 :5.946427498927402;
+	[select_xloc9] loc=xloc8 :24.331050121192877;
+	[select_xloc10] loc=xloc8 :7.5604232685743185;
+	[select_xloc11] loc=xloc8 :20.00399960007998;
+	[select_xloc12] loc=xloc8 :16.70449041425688;
+	[select_xloc13] loc=xloc8 :4.019950248448358;
+	[select_xloc14] loc=xloc8 :14.866068747318506;
+	[select_xloc15] loc=xloc8 :4.019950248448355;
+	[select_xloc16] loc=xloc8 :14.035668847618199;
+	[select_dloc1] loc=xloc8 :13.078226179417452;
+	[select_dloc2] loc=xloc8 :2.0099751242241775;
+	[select_dloc3] loc=xloc8 :20.32141727340886;
+	[select_dloc4] loc=xloc8 :4.651881339845202;
+	[select_dloc5] loc=xloc8 :16.316862443496913;
+	[select_xloc1] loc=xloc9 :13.078226179417452;
+	[select_xloc2] loc=xloc9 :10.04987562112089;
+	[select_xloc3] loc=xloc9 :2.0099751242241775;
+	[select_xloc4] loc=xloc9 :16.643316977093235;
+	[select_xloc5] loc=xloc9 :4.019950248448358;
+	[select_xloc6] loc=xloc9 :4.651881339845202;
+	[select_xloc7] loc=xloc9 :28.002856997099418;
+	[select_xloc8] loc=xloc9 :24.331050121192877;
+	[select_xloc10] loc=xloc9 :19.94893480865582;
+	[select_xloc11] loc=xloc9 :5.9464274989274015;
+	[select_xloc12] loc=xloc9 :11.892854997854803;
+	[select_xloc13] loc=xloc9 :28.23047998175022;
+	[select_xloc14] loc=xloc9 :13.45362404707371;
+	[select_xloc15] loc=xloc9 :20.47828117787233;
+	[select_xloc16] loc=xloc9 :11.180339887498949;
+	[select_dloc1] loc=xloc9 :15.120846537148637;
+	[select_dloc2] loc=xloc9 :22.397321268401722;
+	[select_dloc3] loc=xloc9 :4.019950248448355;
+	[select_dloc4] loc=xloc9 :26.000769219390413;
+	[select_dloc5] loc=xloc9 :8.039900496896712;
+	[select_xloc1] loc=xloc10 :6.896375859826667;
+	[select_xloc2] loc=xloc10 :11.034491379306976;
+	[select_xloc3] loc=xloc10 :21.85040045399626;
+	[select_xloc4] loc=xloc10 :4.019950248448356;
+	[select_xloc5] loc=xloc10 :23.769728648009426;
+	[select_xloc6] loc=xloc10 :16.593974810153235;
+	[select_xloc7] loc=xloc10 :13.45362404707371;
+	[select_xloc8] loc=xloc10 :7.5604232685743185;
+	[select_xloc9] loc=xloc10 :19.94893480865582;
+	[select_xloc11] loc=xloc10 :14.61642911247477;
+	[select_xloc12] loc=xloc10 :10.00199980003999;
+	[select_xloc13] loc=xloc10 :11.180339887498949;
+	[select_xloc14] loc=xloc10 :8.009993757800316;
+	[select_xloc15] loc=xloc10 :4.651881339845202;
+	[select_xloc16] loc=xloc10 :8.772684879784524;
+	[select_dloc1] loc=xloc10 :6.029925372672534;
+	[select_dloc2] loc=xloc10 :5.946427498927402;
+	[select_dloc3] loc=xloc10 :16.224672569885655;
+	[select_dloc4] loc=xloc10 :11.892854997854803;
+	[select_dloc5] loc=xloc10 :12.682271089990152;
+	[select_xloc1] loc=xloc11 :8.039900496896713;
+	[select_xloc2] loc=xloc11 :6.896375859826667;
+	[select_xloc3] loc=xloc11 :7.560423268574318;
+	[select_xloc4] loc=xloc11 :11.00727032465361;
+	[select_xloc5] loc=xloc11 :9.329523031752482;
+	[select_xloc6] loc=xloc11 :2.0099751242241775;
+	[select_xloc7] loc=xloc11 :24.475293665245374;
+	[select_xloc8] loc=xloc11 :20.00399960007998;
+	[select_xloc9] loc=xloc11 :5.9464274989274015;
+	[select_xloc10] loc=xloc11 :14.61642911247477;
+	[select_xloc12] loc=xloc11 :5.946427498927402;
+	[select_xloc13] loc=xloc11 :24.013329631685817;
+	[select_xloc14] loc=xloc11 :7.56042326857432;
+	[select_xloc15] loc=xloc11 :16.0;
+	[select_xloc16] loc=xloc11 :6.029925372672534;
+	[select_dloc1] loc=xloc11 :9.329523031752482;
+	[select_dloc2] loc=xloc11 :18.001111076819676;
+	[select_dloc3] loc=xloc11 :3.999999999999999;
+	[select_dloc4] loc=xloc11 :22.475764725588316;
+	[select_dloc5] loc=xloc11 :5.381449618829484;
+	[select_xloc1] loc=xloc12 :5.381449618829484;
+	[select_xloc2] loc=xloc12 :8.052328855678956;
+	[select_xloc3] loc=xloc12 :13.45362404707371;
+	[select_xloc4] loc=xloc12 :6.003332407921454;
+	[select_xloc5] loc=xloc12 :15.12084653714864;
+	[select_xloc6] loc=xloc12 :7.5604232685743185;
+	[select_xloc7] loc=xloc12 :22.01454064930722;
+	[select_xloc8] loc=xloc12 :16.70449041425688;
+	[select_xloc9] loc=xloc12 :11.892854997854803;
+	[select_xloc10] loc=xloc12 :10.00199980003999;
+	[select_xloc11] loc=xloc12 :5.946427498927402;
+	[select_xloc13] loc=xloc12 :20.66494616494318;
+	[select_xloc14] loc=xloc12 :2.0099751242241783;
+	[select_xloc15] loc=xloc12 :12.781236246936366;
+	[select_xloc16] loc=xloc12 :4.294182110716776;
+	[select_dloc1] loc=xloc12 :4.019950248448357;
+	[select_dloc2] loc=xloc12 :14.736349615830914;
+	[select_dloc3] loc=xloc12 :9.303762679690404;
+	[select_dloc4] loc=xloc12 :20.124611797498105;
+	[select_dloc5] loc=xloc12 :7.999999999999998;
+	[select_xloc1] loc=xloc13 :16.079800993793427;
+	[select_xloc2] loc=xloc13 :18.186808406094784;
+	[select_xloc3] loc=xloc13 :30.23970899330878;
+	[select_xloc4] loc=xloc13 :15.005332385522156;
+	[select_xloc5] loc=xloc13 :32.249030993194204;
+	[select_xloc6] loc=xloc13 :26.006922155456994;
+	[select_xloc7] loc=xloc13 :3.999999999999999;
+	[select_xloc8] loc=xloc13 :4.019950248448358;
+	[select_xloc9] loc=xloc13 :28.23047998175022;
+	[select_xloc10] loc=xloc13 :11.180339887498949;
+	[select_xloc11] loc=xloc13 :24.013329631685817;
+	[select_xloc12] loc=xloc13 :20.66494616494318;
+	[select_xloc14] loc=xloc13 :18.79255171603899;
+	[select_xloc15] loc=xloc13 :8.039900496896713;
+	[select_xloc16] loc=xloc13 :18.05436235373601;
+	[select_dloc1] loc=xloc13 :16.951696080333672;
+	[select_dloc2] loc=xloc13 :6.029925372672534;
+	[select_dloc3] loc=xloc13 :24.212393520674492;
+	[select_dloc4] loc=xloc13 :4.294182110716777;
+	[select_dloc5] loc=xloc13 :20.19504889818294;
+	[select_xloc1] loc=xloc14 :4.294182110716776;
+	[select_xloc2] loc=xloc14 :7.999999999999998;
+	[select_xloc3] loc=xloc14 :15.120846537148637;
+	[select_xloc4] loc=xloc14 :4.0;
+	[select_xloc5] loc=xloc14 :16.86297719858507;
+	[select_xloc6] loc=xloc14 :9.329523031752482;
+	[select_xloc7] loc=xloc14 :20.306649157357302;
+	[select_xloc8] loc=xloc14 :14.866068747318506;
+	[select_xloc9] loc=xloc14 :13.45362404707371;
+	[select_xloc10] loc=xloc14 :8.009993757800316;
+	[select_xloc11] loc=xloc14 :7.56042326857432;
+	[select_xloc12] loc=xloc14 :2.0099751242241783;
+	[select_xloc13] loc=xloc14 :18.79255171603899;
+	[select_xloc15] loc=xloc14 :11.00727032465361;
+	[select_xloc16] loc=xloc14 :3.999999999999999;
+	[select_dloc1] loc=xloc14 :2.0099751242241783;
+	[select_dloc2] loc=xloc14 :12.92439553712281;
+	[select_dloc3] loc=xloc14 :10.486181383134664;
+	[select_dloc4] loc=xloc14 :18.456435192094922;
+	[select_dloc5] loc=xloc14 :8.440379138403676;
+	[select_xloc1] loc=xloc15 :8.039900496896713;
+	[select_xloc2] loc=xloc15 :10.562196741208714;
+	[select_xloc3] loc=xloc15 :22.475764725588316;
+	[select_xloc4] loc=xloc15 :7.56042326857432;
+	[select_xloc5] loc=xloc15 :24.475293665245374;
+	[select_xloc6] loc=xloc15 :18.001111076819676;
+	[select_xloc7] loc=xloc15 :9.329523031752482;
+	[select_xloc8] loc=xloc15 :4.019950248448355;
+	[select_xloc9] loc=xloc15 :20.47828117787233;
+	[select_xloc10] loc=xloc15 :4.651881339845202;
+	[select_xloc11] loc=xloc15 :16.0;
+	[select_xloc12] loc=xloc15 :12.781236246936366;
+	[select_xloc13] loc=xloc15 :8.039900496896713;
+	[select_xloc14] loc=xloc15 :11.00727032465361;
+	[select_xloc16] loc=xloc15 :10.017983829094554;
+	[select_dloc1] loc=xloc15 :9.329523031752482;
+	[select_dloc2] loc=xloc15 :2.0099751242241775;
+	[select_dloc3] loc=xloc15 :16.492422502470646;
+	[select_dloc4] loc=xloc15 :7.560423268574318;
+	[select_dloc5] loc=xloc15 :12.528367810692663;
+	[select_xloc1] loc=xloc16 :2.0099751242241783;
+	[select_xloc2] loc=xloc16 :3.999999999999999;
+	[select_xloc3] loc=xloc16 :13.078226179417452;
+	[select_xloc4] loc=xloc16 :5.65685424949238;
+	[select_xloc5] loc=xloc16 :15.005332385522156;
+	[select_xloc6] loc=xloc16 :8.039900496896713;
+	[select_xloc7] loc=xloc16 :18.79255171603899;
+	[select_xloc8] loc=xloc16 :14.035668847618199;
+	[select_xloc9] loc=xloc16 :11.180339887498949;
+	[select_xloc10] loc=xloc16 :8.772684879784524;
+	[select_xloc11] loc=xloc16 :6.029925372672534;
+	[select_xloc12] loc=xloc16 :4.294182110716776;
+	[select_xloc13] loc=xloc16 :18.05436235373601;
+	[select_xloc14] loc=xloc16 :3.999999999999999;
+	[select_xloc15] loc=xloc16 :10.017983829094554;
+	[select_dloc1] loc=xloc16 :4.651881339845202;
+	[select_dloc2] loc=xloc16 :12.026637102698325;
+	[select_dloc3] loc=xloc16 :7.56042326857432;
+	[select_dloc4] loc=xloc16 :16.82379267585047;
+	[select_dloc5] loc=xloc16 :4.651881339845202;
+endrewards
+
+// Excavatability probabilities for excavation locations
+const double ex_loc1=0.6348;
+const double ex_loc2=0.7586;
+const double ex_loc3=0.749;
+const double ex_loc4=0.6681;
+const double ex_loc5=0.8775;
+const double ex_loc6=0.8919;
+const double ex_loc7=0.6708;
+const double ex_loc8=0.6457;
+const double ex_loc9=0.9137;
+const double ex_loc10=0.9102;
+const double ex_loc11=0.8824;
+const double ex_loc12=0.6606;
+const double ex_loc13=0.855;
+const double ex_loc14=0.7229;
+const double ex_loc15=0.6381;
+const double ex_loc16=0.629;
+
+// Maximum number of excavation attempts (can be 1 by default, number of excavation locations upper bound)
+const int MAX_TRIED=1;

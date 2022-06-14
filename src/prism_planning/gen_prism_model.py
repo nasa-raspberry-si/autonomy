@@ -28,7 +28,7 @@ class ExcaPrismModelGenerator():
 
     def __generate_move_reward(self, reward_name, reward_factor):
         code = "\n"
-	code += "rewards \""+reward_name+"\"\n"
+        code += "rewards \""+reward_name+"\"\n"
         for s_loc_ID, s_loc in self.rt_info['xloc_list'].items():
             # when the target loc is an excavation loc
             for t_loc_ID, t_loc in self.rt_info['xloc_list'].items():
@@ -47,36 +47,35 @@ class ExcaPrismModelGenerator():
                 dist = self.cal_dist(s_loc_coord, t_loc_coord)
                 reward = reward_factor * dist
                 code += "\t[select_"+t_loc_ID+"] loc="+s_loc_ID+" :" + str(reward)+";\n"
-	code += "endrewards\n"
+        code += "endrewards\n"
         return code
 
 
     def generate_rewards(self):
-	code = ""
-
-	# Generates science value rewards
-	code +="// Science value reward\n// The estimated science value for the different excavation locations has to be provided by a different model\n"
-	code += "rewards \"SV\"\n"
+        code = ""
+        # Generates science value rewards
+        code +="// Science value reward\n// The estimated science value for the different excavation locations has to be provided by a different model\n"
+        code += "rewards \"SV\"\n"
         for xloc_ID, xloc in self.rt_info['xloc_list'].items():
             code += "\t[select_"+xloc_ID+"] true: "+ str(xloc["sci_val"])+";\n"
-	code += "endrewards\n\n"
+        code += "endrewards\n\n"
 
-	# Generates energy consumption rewards
-	code += "// Energy consumption cost\n"
-	code += "// The values for the energy costs have to be provided by a different model\n"
-	code += "// the reward structure below considers both the cost of excavation and moving to the arm to a location\n"
-	code += "// the cost of excavation is fixed, but the cost of movement from another location varies, depending on the\n" 
-	code += "// original location of the arm (there is one line of the reward structure per alternative original location\n"
-	code += "// NOTE: cost of moving the arm A->B and B<-A are the same here, but these costs might be different due to different\n"
-	code += "// trajectories computed by lower-level control\n"
+        # Generates energy consumption rewards
+        code += "// Energy consumption cost\n"
+        code += "// The values for the energy costs have to be provided by a different model\n"
+        code += "// the reward structure below considers both the cost of excavation and moving to the arm to a location\n"
+        code += "// the cost of excavation is fixed, but the cost of movement from another location varies, depending on the\n" 
+        code += "// original location of the arm (there is one line of the reward structure per alternative original location\n"
+        code += "// NOTE: cost of moving the arm A->B and B<-A are the same here, but these costs might be different due to different\n"
+        code += "// trajectories computed by lower-level control\n"
 
-	seed(1)
-	energy_factor = 1 # random()
+        seed(1)
+        energy_factor = 1 # random()
         code += self.__generate_move_reward("EC", energy_factor)
-	time_factor = 1.0/0.05 # 0.05 represents the average velocity of the arm; random()
+        time_factor = 1.0/0.05 # 0.05 represents the average velocity of the arm; random()
         code += self.__generate_move_reward("T", time_factor)
 
-	return code
+        return code
 
     def generate_excavatability_probabilities(self):
         code = "\n// Excavatability probabilities for excavation locations\n"
@@ -98,6 +97,6 @@ class ExcaPrismModelGenerator():
         code = ""
         code += self.generate_rewards() + self.generate_excavatability_probabilities() + self.generate_max_tried(max_tried)
 
-	with open(self.prism_model_fp, "a") as myfile:
-		myfile.write("\n// Script-generated rewards and constants start here\n\n\n"+code)
-	loginfo("A Prism model has been successfully generated.")
+        with open(self.prism_model_fp, "a") as myfile:
+            myfile.write("\n// Script-generated rewards and constants start here\n\n\n"+code)
+        loginfo("A Prism model has been successfully generated.")

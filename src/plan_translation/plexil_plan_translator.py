@@ -54,7 +54,6 @@ class PlexilPlanTranslator():
         plan_info = {}
         if scenario == Scenario.EXCAVATION:
             plan_info = self.parse_syn_plan_exca(runtime_info, prism_syn_plan)
-            plan_info['task_name'] = Scenario.EXCAVATION
         else:
             loginfo("[Plan Translation] Unknown scenario: " + Scenario.get_scenario_str(scenario))
         return plan_info
@@ -178,7 +177,7 @@ class PlexilPlanTranslator():
             "OpOutcome"              : "OP_SUCCESS"
         }
         gmr_if_body = self.gen_var_assignment(2, temp_var_assignments)
-        gmr_if_body += self.gen_log_info(2, "\"Detected ground position: \", Lookup(GroundPosition)") 
+        gmr_if_body += self.gen_log_info(2, "\"[GuardedMove Operation] Detected ground position: \", Lookup(GroundPosition)") 
         gmr_else_body = self.gen_var_assignment(2, {"OpOutcome" : "OP_FAILURE"}) 
         code += self.gen_if_stat(1, gmr_if_cond, gmr_if_body, gmr_else_body, [])
         code += self.gen_checkpoint(1, checkpoints["GuardedMove_Finish"])
@@ -194,7 +193,7 @@ class PlexilPlanTranslator():
         ## Grind operation
         cp_start = checkpoints["Grind_Start"]
         gds_if_body += self.gen_checkpoint(2, cp_start)
-        temp_msg = "[Digging Operation] Start: grinding at the location (x=" + str(xloc_x) + ",y=" + str(xloc_y) + ")"
+        temp_msg = "[Grind Operation] Start: grinding at the location (x=" + str(xloc_x) + ",y=" + str(xloc_y) + ")"
         gds_if_body += self.gen_log_info(2, "\"" + temp_msg + "\"")
         gds_if_body += "\n"
         gds_if_body += self.gen_grind(
@@ -221,7 +220,7 @@ class PlexilPlanTranslator():
         dgs_if_cond = "DiggingSuccess"
         dgs_if_body = ""
 
-        ### TailingRemoval Operation: DigCircular and Deliver actions
+        ### TailingRemoval Operation: DigCircular and Discard actions
         cp_start = checkpoints["TailingRemoval_Start"]
         dgs_if_body += self.gen_checkpoint(3, cp_start)
         temp_msg = "[TailingRemoval Operation] Start: remove from the depth of " + str(trench_depth) + " meters in the trench location (x=" + str(xloc_x) + ",y=" + str(xloc_y) + ") to the dump location (x=" + str(dloc_x) + ",y=" + str(dloc_y) + ",z=" + str(dloc_x) + ")"
@@ -230,10 +229,10 @@ class PlexilPlanTranslator():
         #### Grab tailing using DigCircular
         dgs_if_body += self.gen_dig_circular(3, xloc_x, xloc_y, trench_depth)
         #### Move tailing to the dump location
-        dgs_if_body += self.gen_deliver(3, dloc_x, dloc_y, dloc_z)
+        dgs_if_body += self.gen_discard(3, dloc_x, dloc_y, dloc_z)
        
         ### Check and send out the result of TailingRemove operation (trr: TailingRemovalResult)
-        trr_if_cond = "Lookup(OpState(\"DigCircular\")) && Lookup(OpState(\"Deliver\"))"
+        trr_if_cond = "Lookup(OpState(\"DigCircular\")) && Lookup(OpState(\"Discard\"))"
         temp_var_assignments = {
             "TrenchReady" : "true",
             "OpOutcome"   : "OP_SUCCESS"
@@ -377,8 +376,6 @@ class PlexilPlanTranslator():
         code = []
         if msg != "":
             code.append("log_info (\""+ msg + "\");\n")
-        else:
-            code.append("log_info (\"Start GuardedMove...\");\n")
 
         code.append("LibraryCall GuardedMove (\n")
         code.append("\tX = " + str(x) + ", Y = " + str(y) + ", Z = " + str(z) + ",\n")
@@ -392,8 +389,6 @@ class PlexilPlanTranslator():
         code = []
         if msg != "":
             code.append("log_info (\""+ msg + "\");\n")
-        else:
-            code.append("log_info (\"Start Grind...\");\n")
 
         code.append("LibraryCall Grind (\n")
         code.append("\tX = " + str(x) + ", Y = " + str(y) + ",\n")
@@ -409,8 +404,6 @@ class PlexilPlanTranslator():
         code = []
         if msg != "":
             code.append("log_info (\""+ msg + "\");\n")
-        else:
-            code.append("log_info (\"Start dig_circular...\");\n")
         code.append("LibraryCall DigCircular (\n")
         code.append("\tX = " + str(x) + ", Y = " + str(y) + ", Depth = " + str(depth) + ",\n")
         code.append("\tGroundPos = Lookup(GroundPosition),\n")
@@ -418,14 +411,12 @@ class PlexilPlanTranslator():
  
         return self.__ident_code(code, pre_dents)
 
-    def gen_deliver(self, tab_num, x, y, z=0.5,  msg=""):
+    def gen_discard(self, tab_num, x, y, z=0.5,  msg=""):
         pre_dents = self.__gen_ident_str(tab_num)
         code = []
         if msg != "":
             code.append("log_info (\""+ msg + "\");\n")
-        else:
-            code.append("log_info (\"Delivering the sample...\");\n")
-        code.append("LibraryCall Deliver (X = " + str(x) + ", Y = " + str(y) + ", Z = " + str(z) + ");\n")
+        code.append("LibraryCall Discard (X = " + str(x) + ", Y = " + str(y) + ", Z = " + str(z) + ");\n")
         
         return self.__ident_code(code, pre_dents)
 
@@ -444,7 +435,7 @@ class PlexilPlanTranslator():
         return code
 
 
-    def gen_ground_detection_body(self, tab_num, cp_start, x, y, z=0.05, dir_x=0.0, dir_y=0.0, dir_z=1.0, search_dist=0.5):
+    def gen_ground_detection_body(self, tab_num, cp_start, x, y, z=0.05, dir_x=0.0, dir_y=0.0, dir_z=1.0, search_dist=1.0):
         code = ""
         ## Send out the message that GroundDetection starts
         code += self.gen_checkpoint(tab_num, cp_start)

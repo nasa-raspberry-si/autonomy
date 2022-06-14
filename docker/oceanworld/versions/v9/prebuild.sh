@@ -10,7 +10,7 @@ sed -i 's/SEND_ERROR/WARNING/' /ros_ws/src/ow_simulator/ow_ephemeris/CMakeLists.
 
 
 # build PLEXIL
-git clone https://git.code.sf.net/p/plexil/git /root/plexil
+git clone --branch releases/plexil-4.6 https://git.code.sf.net/p/plexil/git /root/plexil
 export PLEXIL_HOME=/root/plexil
 export PATH="${PATH}:${PLEXIL_HOME}/scripts"
 if [ -z "$LD_LIBRARY_PATH" ]
@@ -28,7 +28,7 @@ echo '. $PLEXIL_HOME/scripts/plexil-setup.sh' >> ~/.profile
 . ~/.bashrc
 echo "PLEXIL_HOME=\"${PLEXIL_HOME}\""
 cd ${PLEXIL_HOME}
-git checkout tag/OceanWATERS-v9.0 -b OceanWATERS-v9.0
+git checkout OceanWATERS-v10.0
 make src/configure
 cd src
 ./configure CFLAGS="-g -O2" CXXFLAGS="-g -O2" --prefix=/root/plexil --disable-static --disable-viewer --enable-ipc
