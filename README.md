@@ -9,7 +9,7 @@ This branch is based on the release 9 of OceanWATERS testbed (a version of noeti
   - pull down the ow9 branch of the repos (ow_simulator, ow_autonomy, ow_europa and irg_ope) from nasa-raspberry-si git organization into ~/oceanwater_ws/src. After checking out the ow9 branch of nasa-raspberry-si/ow_simulator, create a soft link .rosinstall inside ~/oceanwater_ws/src using the command below and then use wstool to update code bases.
     * `ln -s ~/oceanwater_ws/src/ow_simulator/oceanwaters/workspaces/oceanwaters_ow9_rs.rosinstall  ~/oceanwater_ws/src/.rosinstall`
     * `wstool update`
-  - Pull down ow9 branch of nasa-raspberry-si/autonomy into ~/oceanwater_ws/src
+  - Pull down nasa-raspberry-si/autonomy into ~/oceanwater_ws/src
   - Source ROS noetic envirionment
     * `source /opt/ros/noetic/setup.bash`
   - Build using catkin
